@@ -68,6 +68,7 @@ func main() {
 	flag.StringVar(&bankStatementPaths, "bank-statement-paths", "bca.csv,bri.csv", "bank statements CSV file path")
 	flag.StringVar(&startDateStr, "start-date", time.Now().Format("2006-01-02"), "bank statements CSV file path")
 	flag.StringVar(&endDateStr, "end-date", time.Now().Format("2006-01-02"), "bank statements CSV file path")
+	flag.Parse()
 
 	startDate, err := time.Parse("2006-01-02", startDateStr)
 	if err != nil {
@@ -79,7 +80,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	flag.Parse()
 
 	transactions, err := readTransactionsFromCSV(transactionPath, startDate, endDate)
 	if err != nil {
