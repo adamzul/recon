@@ -14,7 +14,7 @@
         "-transaction-path",
         "transaction.csv",
         "-bank-statement-paths",
-        "bca.csv"
+        "bca.csv,bri.csv"
       ]
     }
   ]

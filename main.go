@@ -34,6 +34,29 @@ type BankStatement struct {
 	Time   time.Time
 }
 
+type BankStatementGroup struct {
+	BankStatements []BankStatement
+	AppearMultiple bool
+}
+
+func (b *BankStatementGroup) Add(statement BankStatement) {
+	if len(b.BankStatements) == 0 {
+		b.BankStatements = []BankStatement{}
+	} else {
+		b.SetAppearMultiple()
+	}
+
+	b.BankStatements = append(b.BankStatements, statement)
+}
+
+func (b *BankStatementGroup) Shift() {
+	b.BankStatements = b.BankStatements[1:]
+}
+
+func (b *BankStatementGroup) SetAppearMultiple() {
+	b.AppearMultiple = true
+}
+
 func main() {
 	var transactionPath, bankStatementPaths string
 	flag.StringVar(&transactionPath, "transaction-path", "", "transactions CSV file path")
@@ -47,7 +70,7 @@ func main() {
 		return
 	}
 
-	bankStatementMap := map[float64][]BankStatement{}
+	bankStatementMap := map[float64]*BankStatementGroup{}
 	bankStatementPathArray := strings.Split(bankStatementPaths, ",")
 	for _, path := range bankStatementPathArray {
 		statements, err := readBankStatementsFromCSV(path)
@@ -57,26 +80,32 @@ func main() {
 		}
 
 		for _, statement := range statements {
-			if bankStatementMap[statement.Amount] == nil {
-				bankStatementMap[statement.Amount] = []BankStatement{}
+			if _, ok := bankStatementMap[statement.Amount]; !ok {
+				bankStatementMap[statement.Amount] = &BankStatementGroup{}
 			}
-			bankStatementMap[statement.Amount] = append(bankStatementMap[statement.Amount], statement)
+			bankStatementMap[statement.Amount].Add(statement)
 		}
 	}
 
 	//recon
 	transactions = lo.Filter(transactions, func(t Transaction, i int) bool {
 		bankStatements := bankStatementMap[t.Amount]
-		if len(bankStatements) > 0 {
-			bankStatements = bankStatements[1:]
-			bankStatementMap[t.Amount] = bankStatements
+		if bankStatements != nil && len(bankStatements.BankStatements) > 0 {
+			bankStatementMap[t.Amount].Shift()
 			// remove the transaction if it has a matching bank statement
 			return false
 		}
 		return true
 	})
+
 	fmt.Println(transactions)
-	fmt.Println(bankStatementMap)
+	for amount, group := range bankStatementMap {
+		fmt.Printf("Amount: %.2f\n", amount)
+		for _, statement := range group.BankStatements {
+			fmt.Printf("  %+v\n", statement)
+		}
+	}
+
 }
 
 func readTransactionsFromCSV(filename string) ([]Transaction, error) {
