@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/samber/lo"
+	"github.com/xuri/excelize/v2"
 )
 
 type TransactionType string
@@ -98,16 +99,71 @@ func main() {
 		return true
 	})
 
-	fmt.Println(transactions)
-	for amount, group := range bankStatementMap {
-		fmt.Printf("Amount: %.2f\n", amount)
-		for _, statement := range group.BankStatements {
-			fmt.Printf("  %+v\n", statement)
+	bankStatementDisrepancy := map[string]*bankStatementDisrepancyGroup{}
+	for _, group := range bankStatementMap {
+		if len(group.BankStatements) > 0 {
+			for _, statement := range group.BankStatements {
+				if _, ok := bankStatementDisrepancy[statement.Bank]; !ok {
+					bankStatementDisrepancy[statement.Bank] = &bankStatementDisrepancyGroup{}
+				}
+				bankStatementDisrepancy[statement.Bank].Add(statement)
+			}
 		}
 	}
 
+	writeTransactionsToExcel("recon.xlsx", transactions, "transaction")
+	for bank, group := range bankStatementDisrepancy {
+		writeBankStatementsToExcel("recon.xlsx", group.Statements, bank)
+	}
 }
 
+type bankStatementDisrepancyGroup struct {
+	Statements []BankStatement
+}
+
+func (b *bankStatementDisrepancyGroup) Add(statement BankStatement) {
+	b.Statements = append(b.Statements, statement)
+}
+
+func writeTransactionsToExcel(path string, transactions []Transaction, sheet string) error {
+	f, err := excelize.OpenFile(path) // open existing file
+	if err != nil {
+		// if not exist, create new
+		f = excelize.NewFile()
+	}
+
+	index, err := f.GetSheetIndex(sheet)
+	if err != nil {
+		return err
+	}
+
+	if index == -1 {
+		f.NewSheet(sheet)
+	}
+
+	// header
+	headers := []string{"Id", "Amount", "Type", "Time"}
+	for i, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		f.SetCellValue(sheet, cell, h)
+	}
+
+	// rows
+	for row, tx := range transactions {
+		values := []interface{}{
+			tx.Id,
+			tx.Amount,
+			string(tx.Type),
+			tx.Time.Format(time.RFC3339),
+		}
+		for col, v := range values {
+			cell, _ := excelize.CoordinatesToCellName(col+1, row+2)
+			f.SetCellValue(sheet, cell, v)
+		}
+	}
+
+	return f.SaveAs(path)
+}
 func readTransactionsFromCSV(filename string) ([]Transaction, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -199,4 +255,48 @@ func readBankStatementsFromCSV(filename string) ([]BankStatement, error) {
 	}
 
 	return statements, nil
+}
+
+func writeBankStatementsToExcel(path string, statements []BankStatement, sheet string) error {
+	f, err := excelize.OpenFile(path) // open existing file
+	if err != nil {
+		// if not exist, create new
+		f = excelize.NewFile()
+	}
+
+	index, err := f.GetSheetIndex(sheet)
+	if err != nil {
+		return err
+	}
+
+	if index == -1 {
+		f.NewSheet(sheet)
+	}
+
+	// Write header row
+	headers := []string{"Bank", "ID", "Amount", "Time"}
+	for i, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1) // row 1
+		f.SetCellValue(sheet, cell, h)
+	}
+
+	// Write each BankStatement
+	for row, s := range statements {
+		values := []interface{}{
+			s.Bank,
+			s.ID,
+			s.Amount,
+			s.Time.Format(time.RFC3339), // store as formatted string
+		}
+		for col, v := range values {
+			cell, _ := excelize.CoordinatesToCellName(col+1, row+2) // data starts at row 2
+			f.SetCellValue(sheet, cell, v)
+		}
+	}
+
+	// Save file
+	if err := f.SaveAs(path); err != nil {
+		return err
+	}
+	return nil
 }
