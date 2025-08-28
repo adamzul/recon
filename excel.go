@@ -86,7 +86,7 @@ func writeTransactionsToExcel(path string, transactions []Transaction, sheet str
 
 	return f.SaveAs(path)
 }
-func readTransactionsFromCSV(filename string) ([]Transaction, error) {
+func readTransactionsFromCSV(filename string, startDate time.Time, endDate time.Time) ([]Transaction, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -116,6 +116,10 @@ func readTransactionsFromCSV(filename string) ([]Transaction, error) {
 			return nil, fmt.Errorf("invalid time format in row: %v", row)
 		}
 
+		if t.Before(startDate) || t.After(endDate.Add(24*time.Hour)) {
+			continue
+		}
+
 		tx := Transaction{
 			Id:     row[0],
 			Amount: amount,
@@ -128,7 +132,7 @@ func readTransactionsFromCSV(filename string) ([]Transaction, error) {
 	return transactions, nil
 }
 
-func readBankStatementsFromCSV(filename string) ([]BankStatement, error) {
+func readBankStatementsFromCSV(filename string, startDate time.Time, endDate time.Time) ([]BankStatement, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -161,11 +165,11 @@ func readBankStatementsFromCSV(filename string) ([]BankStatement, error) {
 
 		t, err := time.Parse(time.RFC3339, row[2])
 		if err != nil {
-			// fallback example: try "2006-01-02 15:04:05"
-			t, err = time.Parse("2006-01-02 15:04:05", row[2])
-			if err != nil {
-				return nil, fmt.Errorf("invalid time format in row: %v", row)
-			}
+			return nil, fmt.Errorf("invalid time format in row: %v", row)
+		}
+
+		if t.Before(startDate) || t.After(endDate.Add(24*time.Hour)) {
+			continue
 		}
 
 		statements = append(statements, BankStatement{

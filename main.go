@@ -63,12 +63,25 @@ type Total struct {
 
 func main() {
 	var transactionPath, bankStatementPaths string
-	flag.StringVar(&transactionPath, "transaction-path", "", "transactions CSV file path")
-	flag.StringVar(&bankStatementPaths, "bank-statement-paths", "", "bank statements CSV file path")
+	var startDateStr, endDateStr string
+	flag.StringVar(&transactionPath, "transaction-path", "transaction.csv", "transactions CSV file path")
+	flag.StringVar(&bankStatementPaths, "bank-statement-paths", "bca.csv,bri.csv", "bank statements CSV file path")
+	flag.StringVar(&startDateStr, "start-date", time.Now().Format("2006-01-02"), "bank statements CSV file path")
+	flag.StringVar(&endDateStr, "end-date", time.Now().Format("2006-01-02"), "bank statements CSV file path")
 
+	startDate, err := time.Parse("2006-01-02", startDateStr)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	endDate, err := time.Parse("2006-01-02", endDateStr)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	flag.Parse()
 
-	transactions, err := readTransactionsFromCSV(transactionPath)
+	transactions, err := readTransactionsFromCSV(transactionPath, startDate, endDate)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -79,7 +92,7 @@ func main() {
 	bankStatementMap := map[float64]*BankStatementGroup{}
 	bankStatementPathArray := strings.Split(bankStatementPaths, ",")
 	for _, path := range bankStatementPathArray {
-		statements, err := readBankStatementsFromCSV(path)
+		statements, err := readBankStatementsFromCSV(path, startDate, endDate)
 		if err != nil {
 			fmt.Println(err)
 			return
