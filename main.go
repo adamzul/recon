@@ -53,6 +53,14 @@ func (b *BankStatementGroup) SetAppearMultiple() {
 	b.AppearMultiple = true
 }
 
+type Total struct {
+	TotalAmountTransactions   float64
+	TotalAmountBankStatements float64
+	TotalMatched              int
+	TotalUnmatched            int
+	TotalProcessed            int
+}
+
 func main() {
 	var transactionPath, bankStatementPaths string
 	flag.StringVar(&transactionPath, "transaction-path", "", "transactions CSV file path")
@@ -65,6 +73,8 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+
+	total := Total{TotalProcessed: len(transactions)}
 
 	bankStatementMap := map[float64]*BankStatementGroup{}
 	bankStatementPathArray := strings.Split(bankStatementPaths, ",")
@@ -80,17 +90,21 @@ func main() {
 				bankStatementMap[statement.Amount] = &BankStatementGroup{}
 			}
 			bankStatementMap[statement.Amount].Add(statement)
+			total.TotalAmountBankStatements += statement.Amount
 		}
 	}
 
 	//recon
-	transactions = lo.Filter(transactions, func(t Transaction, i int) bool {
+	transactionDiscrepancies := lo.Filter(transactions, func(t Transaction, i int) bool {
+		total.TotalAmountTransactions += t.Amount
 		bankStatements := bankStatementMap[t.Amount]
 		if bankStatements != nil && len(bankStatements.BankStatements) > 0 {
 			bankStatementMap[t.Amount].Shift()
+			total.TotalMatched++
 			// remove the transaction if it has a matching bank statement
 			return false
 		}
+		total.TotalUnmatched++
 		return true
 	})
 
@@ -103,11 +117,15 @@ func main() {
 				}
 				bankStatementDisrepancy[statement.Bank].Add(statement)
 				bankStatementDisrepancy[statement.Bank].SetAppearMultiple(group.AppearMultiple)
+				total.TotalProcessed++
+				total.TotalUnmatched++
 			}
 		}
 	}
 
-	writeTransactionsToExcel("recon.xlsx", transactions, "transaction")
+	writeTotalKeyValueToExcel("recon.xlsx", "summary", total)
+
+	writeTransactionsToExcel("recon.xlsx", transactionDiscrepancies, "transaction")
 	for bank, group := range bankStatementDisrepancy {
 		writeBankStatementsToExcel("recon.xlsx", group.Statements, group.AppearMultiple, bank)
 	}
