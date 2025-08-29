@@ -2,6 +2,14 @@ package main
 
 import "github.com/xuri/excelize/v2"
 
+type Summary struct {
+	TotalAmountTransactions   float64
+	TotalAmountBankStatements float64
+	TotalMatched              int
+	TotalUnmatched            int
+	TotalProcessed            int
+}
+
 type SummaryRepo struct {
 }
 

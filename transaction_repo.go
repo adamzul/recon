@@ -10,6 +10,20 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+type TransactionType string
+
+const (
+	Debit  TransactionType = "debit"
+	Credit TransactionType = "credit"
+)
+
+type Transaction struct {
+	Id     string
+	Amount float64
+	Type   TransactionType
+	Time   time.Time
+}
+
 type TransactionRepo struct {
 }
 
@@ -97,4 +111,3 @@ func (TransactionRepo) GetTransactions(filename string, startDate time.Time, end
 
 	return transactions, nil
 }
-

@@ -8,6 +8,19 @@ import (
 	"github.com/samber/lo"
 )
 
+type bankStatementDisrepancyGroup struct {
+	Statements     []BankStatement
+	AppearMultiple bool
+}
+
+func (b *bankStatementDisrepancyGroup) Add(statement BankStatement) {
+	b.Statements = append(b.Statements, statement)
+}
+
+func (b *bankStatementDisrepancyGroup) SetAppearMultiple(isAppearMultipleTime bool) {
+	b.AppearMultiple = isAppearMultipleTime
+}
+
 type ReconExecutor struct {
 	transactionRepo   TransactionRepo
 	bankStatementRepo BankStatementRepo

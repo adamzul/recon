@@ -12,6 +12,36 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+type BankStatement struct {
+	Bank   string
+	ID     string
+	Amount float64
+	Time   time.Time
+}
+
+type BankStatementGroup struct {
+	BankStatements []BankStatement
+	AppearMultiple bool
+}
+
+func (b *BankStatementGroup) Add(statement BankStatement) {
+	if len(b.BankStatements) == 0 {
+		b.BankStatements = []BankStatement{}
+	} else {
+		b.SetAppearMultiple()
+	}
+
+	b.BankStatements = append(b.BankStatements, statement)
+}
+
+func (b *BankStatementGroup) Shift() {
+	b.BankStatements = b.BankStatements[1:]
+}
+
+func (b *BankStatementGroup) SetAppearMultiple() {
+	b.AppearMultiple = true
+}
+
 type BankStatementRepo struct {
 }
 
