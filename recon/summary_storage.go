@@ -1,6 +1,20 @@
+//go:generate mockgen -typed -source=summary_storage.go -destination=summary_storage_mocks.go -package=recon
 package recon
 
 import "github.com/xuri/excelize/v2"
+
+type ExcelWriterFactory interface {
+	New(path string) (ExcelWriter, error)
+}
+
+type ExcelWriter interface {
+	SetCellValue(sheet, axis string, value interface{}) error
+	GetSheetIndex(name string) (int, error)
+	NewSheet(name string) (int, error)
+	SaveAs(name string, options ...excelize.Options) error
+}
+
+
 
 type Summary struct {
 	TotalAmountTransactions   float64
@@ -13,19 +27,21 @@ type Summary struct {
 type SummaryStorage struct {
 	destinationFileNamePath string
 	destinationSheetName    string
+	excelWriterFactory      ExcelWriterFactory
 }
 
-func NewSummaryStorage(destinationFileNamePath string, destinationSheetName string) SummaryStorage {
+func NewSummaryStorage(destinationFileNamePath string, destinationSheetName string, excelWriterFactory ExcelWriterFactory) SummaryStorage {
 	return SummaryStorage{
 		destinationFileNamePath: destinationFileNamePath,
 		destinationSheetName:    destinationSheetName,
+		excelWriterFactory:      excelWriterFactory,
 	}
 }
 
 func (s SummaryStorage) StoreSummary(total Summary) error {
-	f, err := excelize.OpenFile(s.destinationFileNamePath)
+	f, err := s.excelWriterFactory.New(s.destinationFileNamePath)
 	if err != nil {
-		f = excelize.NewFile()
+		return err
 	}
 
 	index, err := f.GetSheetIndex(s.destinationSheetName)

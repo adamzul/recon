@@ -32,7 +32,7 @@ func main() {
 	reconExecutor := recon.NewReconExecutor(
 		recon.NewTransactionStorage(reconPath, "Transaction"),
 		recon.NewBankStatementStorage(reconPath),
-		recon.NewSummaryStorage(reconPath, "Summary"),
+		recon.NewSummaryStorage(reconPath, "Summary", recon.ExcelFactory{}),
 	)
 
 	reconExecutor.Execute(transactionPath, bankStatementPaths, startDate, endDate)
