@@ -27,20 +27,22 @@ type Transaction struct {
 type TransactionStorage struct {
 	destinationFileNamePath string
 	destinationSheetName    string
+
+	excelWriterFactory ExcelWriterFactory
 }
 
-func NewTransactionStorage(destinationFileNamePath string, destinationSheetName string) TransactionStorage {
+func NewTransactionStorage(destinationFileNamePath string, destinationSheetName string, excelWriterFactory ExcelWriterFactory) TransactionStorage {
 	return TransactionStorage{
 		destinationFileNamePath: destinationFileNamePath,
 		destinationSheetName:    destinationSheetName,
+		excelWriterFactory:      excelWriterFactory,
 	}
 }
 
 func (t TransactionStorage) StoreTransactions(transactions []Transaction) error {
-	f, err := excelize.OpenFile(t.destinationFileNamePath) // open existing file
+	f, err := t.excelWriterFactory.New(t.destinationFileNamePath)
 	if err != nil {
-		// if not exist, create new
-		f = excelize.NewFile()
+		return err
 	}
 
 	index, err := f.GetSheetIndex(t.destinationSheetName)
@@ -61,7 +63,7 @@ func (t TransactionStorage) StoreTransactions(transactions []Transaction) error 
 
 	// rows
 	for row, tx := range transactions {
-		values := []interface{}{
+		values := []any{
 			tx.Id,
 			tx.Amount,
 			string(tx.Type),

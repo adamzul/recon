@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/go-playground/assert/v2"
+	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
 )
 
@@ -12,6 +12,8 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
+
+		g := NewGomegaWithT(t)
 
 		mockExcelWriter := NewMockExcelWriter(ctrl)
 		mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
@@ -46,12 +48,14 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 		summaryStorage := NewSummaryStorage(destinationFileNamePath, destinationSheetName, mockExcelWriterFactory)
 		err := summaryStorage.StoreSummary(summary)
 
-		assert.Equal(t, err, nil)
+		g.Expect(err).Should(BeNil())
 	})
 
 	t.Run("excelize open file error", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
+
+		g := NewGomegaWithT(t)
 
 		mockExcelWriter := NewMockExcelWriter(ctrl)
 		mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
@@ -72,13 +76,15 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 		summaryStorage := NewSummaryStorage(destinationFileNamePath, destinationSheetName, mockExcelWriterFactory)
 		err := summaryStorage.StoreSummary(summary)
 
-		assert.NotEqual(t, err, nil)
-		assert.Equal(t, err.Error(), "open file error")
+		g.Expect(err).ShouldNot(BeNil())
+		g.Expect(err.Error()).Should(Equal("open file error"))
 	})
 
 	t.Run("get sheet index error", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
+
+		g := NewGomegaWithT(t)
 
 		mockExcelWriter := NewMockExcelWriter(ctrl)
 		mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
@@ -100,13 +106,15 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 		summaryStorage := NewSummaryStorage(destinationFileNamePath, destinationSheetName, mockExcelWriterFactory)
 		err := summaryStorage.StoreSummary(summary)
 
-		assert.NotEqual(t, err, nil)
-		assert.Equal(t, err.Error(), "get sheet index error")
+		g.Expect(err).ShouldNot(BeNil())
+		g.Expect(err.Error()).Should(Equal("get sheet index error"))
 	})
 
 	t.Run("save as error", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
+
+		g := NewGomegaWithT(t)
 
 		mockExcelWriter := NewMockExcelWriter(ctrl)
 		mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
@@ -141,7 +149,7 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 		summaryStorage := NewSummaryStorage(destinationFileNamePath, destinationSheetName, mockExcelWriterFactory)
 		err := summaryStorage.StoreSummary(summary)
 
-		assert.NotEqual(t, err, nil)
-		assert.Equal(t, err.Error(), "save as error")
+		g.Expect(err).ShouldNot(BeNil())
+		g.Expect(err.Error()).Should(Equal("save as error"))
 	})
 }
