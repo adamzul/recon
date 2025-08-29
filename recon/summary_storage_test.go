@@ -8,18 +8,33 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+type SummaryStorageSuite struct {
+	mockExcelWriter        *MockExcelWriter
+	mockExcelWriterFactory *MockExcelWriterFactory
+	summaryStorage         SummaryStorage
+}
+
+func summaryStorageSuite(ctrl *gomock.Controller) SummaryStorageSuite {
+	mockExcelWriter := NewMockExcelWriter(ctrl)
+	mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
+
+	return SummaryStorageSuite{
+		mockExcelWriter:        mockExcelWriter,
+		mockExcelWriterFactory: mockExcelWriterFactory,
+		summaryStorage:         NewSummaryStorage("test.xlsx", "Summary", mockExcelWriterFactory),
+	}
+}
+
 func TestSummaryStorage_StoreSummary(t *testing.T) {
+	destinationFileNamePath := "test.xlsx"
+	destinationSheetName := "Summary"
+
 	t.Run("success", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		g := NewGomegaWithT(t)
-
-		mockExcelWriter := NewMockExcelWriter(ctrl)
-		mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
-
-		destinationFileNamePath := "test.xlsx"
-		destinationSheetName := "Summary"
+		suite := summaryStorageSuite(ctrl)
 
 		summary := Summary{
 			TotalAmountTransactions:   100.0,
@@ -29,24 +44,23 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 			TotalProcessed:            100,
 		}
 
-		mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(mockExcelWriter, nil)
-		mockExcelWriter.EXPECT().GetSheetIndex(destinationSheetName).Return(1, nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A1", "Total Amount Transactions").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B1", summary.TotalAmountTransactions).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A2", "Total Amount Bank Statements").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B2", summary.TotalAmountBankStatements).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A3", "Total Matched").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B3", summary.TotalMatched).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A4", "Total Unmatched").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B4", summary.TotalUnmatched).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A5", "Total Processed").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B5", summary.TotalProcessed).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A6", "Total Amount Dicrepancy").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B6", summary.TotalAmountTransactions-summary.TotalAmountBankStatements).Return(nil)
-		mockExcelWriter.EXPECT().SaveAs(destinationFileNamePath).Return(nil)
+		suite.mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(suite.mockExcelWriter, nil)
+		suite.mockExcelWriter.EXPECT().GetSheetIndex(destinationSheetName).Return(1, nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A1", "Total Amount Transactions").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B1", summary.TotalAmountTransactions).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A2", "Total Amount Bank Statements").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B2", summary.TotalAmountBankStatements).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A3", "Total Matched").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B3", summary.TotalMatched).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A4", "Total Unmatched").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B4", summary.TotalUnmatched).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A5", "Total Processed").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B5", summary.TotalProcessed).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A6", "Total Amount Dicrepancy").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B6", summary.TotalAmountTransactions-summary.TotalAmountBankStatements).Return(nil)
+		suite.mockExcelWriter.EXPECT().SaveAs(destinationFileNamePath).Return(nil)
 
-		summaryStorage := NewSummaryStorage(destinationFileNamePath, destinationSheetName, mockExcelWriterFactory)
-		err := summaryStorage.StoreSummary(summary)
+		err := suite.summaryStorage.StoreSummary(summary)
 
 		g.Expect(err).Should(BeNil())
 	})
@@ -56,12 +70,7 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 		defer ctrl.Finish()
 
 		g := NewGomegaWithT(t)
-
-		mockExcelWriter := NewMockExcelWriter(ctrl)
-		mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
-
-		destinationFileNamePath := "test.xlsx"
-		destinationSheetName := "Summary"
+		suite := summaryStorageSuite(ctrl)
 
 		summary := Summary{
 			TotalAmountTransactions:   100.0,
@@ -71,10 +80,9 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 			TotalProcessed:            100,
 		}
 
-		mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(mockExcelWriter, errors.New("open file error"))
+		suite.mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(suite.mockExcelWriter, errors.New("open file error"))
 
-		summaryStorage := NewSummaryStorage(destinationFileNamePath, destinationSheetName, mockExcelWriterFactory)
-		err := summaryStorage.StoreSummary(summary)
+		err := suite.summaryStorage.StoreSummary(summary)
 
 		g.Expect(err).ShouldNot(BeNil())
 		g.Expect(err.Error()).Should(Equal("open file error"))
@@ -85,12 +93,7 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 		defer ctrl.Finish()
 
 		g := NewGomegaWithT(t)
-
-		mockExcelWriter := NewMockExcelWriter(ctrl)
-		mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
-
-		destinationFileNamePath := "test.xlsx"
-		destinationSheetName := "Summary"
+		suite := summaryStorageSuite(ctrl)
 
 		summary := Summary{
 			TotalAmountTransactions:   100.0,
@@ -100,11 +103,10 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 			TotalProcessed:            100,
 		}
 
-		mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(mockExcelWriter, nil)
-		mockExcelWriter.EXPECT().GetSheetIndex(destinationSheetName).Return(0, errors.New("get sheet index error"))
+		suite.mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(suite.mockExcelWriter, nil)
+		suite.mockExcelWriter.EXPECT().GetSheetIndex(destinationSheetName).Return(0, errors.New("get sheet index error"))
 
-		summaryStorage := NewSummaryStorage(destinationFileNamePath, destinationSheetName, mockExcelWriterFactory)
-		err := summaryStorage.StoreSummary(summary)
+		err := suite.summaryStorage.StoreSummary(summary)
 
 		g.Expect(err).ShouldNot(BeNil())
 		g.Expect(err.Error()).Should(Equal("get sheet index error"))
@@ -115,12 +117,7 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 		defer ctrl.Finish()
 
 		g := NewGomegaWithT(t)
-
-		mockExcelWriter := NewMockExcelWriter(ctrl)
-		mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
-
-		destinationFileNamePath := "test.xlsx"
-		destinationSheetName := "Summary"
+		suite := summaryStorageSuite(ctrl)
 
 		summary := Summary{
 			TotalAmountTransactions:   100.0,
@@ -130,24 +127,23 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 			TotalProcessed:            100,
 		}
 
-		mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(mockExcelWriter, nil)
-		mockExcelWriter.EXPECT().GetSheetIndex(destinationSheetName).Return(1, nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A1", "Total Amount Transactions").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B1", summary.TotalAmountTransactions).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A2", "Total Amount Bank Statements").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B2", summary.TotalAmountBankStatements).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A3", "Total Matched").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B3", summary.TotalMatched).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A4", "Total Unmatched").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B4", summary.TotalUnmatched).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A5", "Total Processed").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B5", summary.TotalProcessed).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A6", "Total Amount Dicrepancy").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B6", summary.TotalAmountTransactions-summary.TotalAmountBankStatements).Return(nil)
-		mockExcelWriter.EXPECT().SaveAs(destinationFileNamePath).Return(errors.New("save as error"))
+		suite.mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(suite.mockExcelWriter, nil)
+		suite.mockExcelWriter.EXPECT().GetSheetIndex(destinationSheetName).Return(1, nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A1", "Total Amount Transactions").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B1", summary.TotalAmountTransactions).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A2", "Total Amount Bank Statements").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B2", summary.TotalAmountBankStatements).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A3", "Total Matched").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B3", summary.TotalMatched).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A4", "Total Unmatched").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B4", summary.TotalUnmatched).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A5", "Total Processed").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B5", summary.TotalProcessed).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A6", "Total Amount Dicrepancy").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B6", summary.TotalAmountTransactions-summary.TotalAmountBankStatements).Return(nil)
+		suite.mockExcelWriter.EXPECT().SaveAs(destinationFileNamePath).Return(errors.New("save as error"))
 
-		summaryStorage := NewSummaryStorage(destinationFileNamePath, destinationSheetName, mockExcelWriterFactory)
-		err := summaryStorage.StoreSummary(summary)
+		err := suite.summaryStorage.StoreSummary(summary)
 
 		g.Expect(err).ShouldNot(BeNil())
 		g.Expect(err.Error()).Should(Equal("save as error"))

@@ -1,20 +1,6 @@
-//go:generate mockgen -typed -source=summary_storage.go -destination=summary_storage_mocks.go -package=recon
 package recon
 
 import "github.com/xuri/excelize/v2"
-
-type ExcelWriterFactory interface {
-	New(path string) (ExcelWriter, error)
-}
-
-type ExcelWriter interface {
-	SetCellValue(sheet, axis string, value interface{}) error
-	GetSheetIndex(name string) (int, error)
-	NewSheet(name string) (int, error)
-	SaveAs(name string, options ...excelize.Options) error
-}
-
-
 
 type Summary struct {
 	TotalAmountTransactions   float64
@@ -54,7 +40,7 @@ func (s SummaryStorage) StoreSummary(total Summary) error {
 	}
 
 	// key-value pairs
-	rows := [][]interface{}{
+	rows := [][]any{
 		{"Total Amount Transactions", total.TotalAmountTransactions},
 		{"Total Amount Bank Statements", total.TotalAmountBankStatements},
 		{"Total Matched", total.TotalMatched},

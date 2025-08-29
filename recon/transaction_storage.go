@@ -1,9 +1,7 @@
 package recon
 
 import (
-	"encoding/csv"
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 
@@ -29,13 +27,15 @@ type TransactionStorage struct {
 	destinationSheetName    string
 
 	excelWriterFactory ExcelWriterFactory
+	readerFactory      ReaderFactory
 }
 
-func NewTransactionStorage(destinationFileNamePath string, destinationSheetName string, excelWriterFactory ExcelWriterFactory) TransactionStorage {
+func NewTransactionStorage(destinationFileNamePath string, destinationSheetName string, excelWriterFactory ExcelWriterFactory, readerFactory ReaderFactory) TransactionStorage {
 	return TransactionStorage{
 		destinationFileNamePath: destinationFileNamePath,
 		destinationSheetName:    destinationSheetName,
 		excelWriterFactory:      excelWriterFactory,
+		readerFactory:           readerFactory,
 	}
 }
 
@@ -78,14 +78,12 @@ func (t TransactionStorage) StoreTransactions(transactions []Transaction) error 
 	return f.SaveAs(t.destinationFileNamePath)
 }
 
-func (TransactionStorage) GetTransactions(filename string, startDate time.Time, endDate time.Time) ([]Transaction, error) {
-	file, err := os.Open(filename)
+func (t TransactionStorage) GetTransactions(filename string, startDate time.Time, endDate time.Time) ([]Transaction, error) {
+	reader, err := t.readerFactory.NewReader(filename)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
 
-	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, err

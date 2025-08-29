@@ -30,9 +30,10 @@ func main() {
 	}
 
 	excelFactory := recon.ExcelFactory{}
+	csvReaderFactory := recon.CSVReaderFactory{}
 
 	reconExecutor := recon.NewReconExecutor(
-		recon.NewTransactionStorage(reconPath, "Transaction", excelFactory),
+		recon.NewTransactionStorage(reconPath, "Transaction", excelFactory, csvReaderFactory),
 		recon.NewBankStatementStorage(reconPath),
 		recon.NewSummaryStorage(reconPath, "Summary", excelFactory),
 	)

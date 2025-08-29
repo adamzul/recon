@@ -9,20 +9,39 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
+type transactionStorageSuite struct {
+	mockExcelWriter        *MockExcelWriter
+	mockExcelWriterFactory *MockExcelWriterFactory
+	mockReader             *MockReader
+	mockReaderFactory      *MockReaderFactory
+	transactionStorage     TransactionStorage
+}
+
+func getTransactionStorageSuite(ctrl *gomock.Controller) transactionStorageSuite {
+	mockExcelWriter := NewMockExcelWriter(ctrl)
+	mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
+	MockReaderFactory := NewMockReaderFactory(ctrl)
+	MockReader := NewMockReader(ctrl)
+
+	return transactionStorageSuite{
+		mockExcelWriter:        mockExcelWriter,
+		mockExcelWriterFactory: mockExcelWriterFactory,
+		mockReader:             MockReader,
+		mockReaderFactory:      MockReaderFactory,
+		transactionStorage:     NewTransactionStorage("test.xlsx", "Transaction", mockExcelWriterFactory, MockReaderFactory),
+	}
+}
+
 func TestTransactionStorage_StoreTransactions(t *testing.T) {
+	destinationFileNamePath := "test.xlsx"
+	destinationSheetName := "Transaction"
 	t.Run("should store transactions successfully", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
-		mockExcelWriter := NewMockExcelWriter(ctrl)
-
-		destinationFileNamePath := "test.xlsx"
-		destinationSheetName := "Sheet1"
-
-		transactionStorage := NewTransactionStorage(destinationFileNamePath, destinationSheetName, mockExcelWriterFactory)
+		suite := getTransactionStorageSuite(ctrl)
 
 		transactions := []Transaction{
 			{
@@ -39,27 +58,27 @@ func TestTransactionStorage_StoreTransactions(t *testing.T) {
 			},
 		}
 
-		mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(mockExcelWriter, nil)
-		mockExcelWriter.EXPECT().GetSheetIndex(destinationSheetName).Return(-1, nil)
-		mockExcelWriter.EXPECT().NewSheet(destinationSheetName).Return(1, nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A1", "Id").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B1", "Amount").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "C1", "Type").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "D1", "Time").Return(nil)
+		suite.mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(suite.mockExcelWriter, nil)
+		suite.mockExcelWriter.EXPECT().GetSheetIndex(destinationSheetName).Return(-1, nil)
+		suite.mockExcelWriter.EXPECT().NewSheet(destinationSheetName).Return(1, nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A1", "Id").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B1", "Amount").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "C1", "Type").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "D1", "Time").Return(nil)
 
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A2", transactions[0].Id).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B2", transactions[0].Amount).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "C2", string(transactions[0].Type)).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "D2", transactions[0].Time.Format(time.RFC3339)).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A2", transactions[0].Id).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B2", transactions[0].Amount).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "C2", string(transactions[0].Type)).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "D2", transactions[0].Time.Format(time.RFC3339)).Return(nil)
 
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A3", transactions[1].Id).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B3", transactions[1].Amount).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "C3", string(transactions[1].Type)).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "D3", transactions[1].Time.Format(time.RFC3339)).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A3", transactions[1].Id).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B3", transactions[1].Amount).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "C3", string(transactions[1].Type)).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "D3", transactions[1].Time.Format(time.RFC3339)).Return(nil)
 
-		mockExcelWriter.EXPECT().SaveAs(destinationFileNamePath).Return(nil)
+		suite.mockExcelWriter.EXPECT().SaveAs(destinationFileNamePath).Return(nil)
 
-		err := transactionStorage.StoreTransactions(transactions)
+		err := suite.transactionStorage.StoreTransactions(transactions)
 
 		g.Expect(err).Should(BeNil())
 	})
@@ -70,18 +89,13 @@ func TestTransactionStorage_StoreTransactions(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
-
-		destinationFileNamePath := "test.xlsx"
-		destinationSheetName := "Sheet1"
-
-		transactionStorage := NewTransactionStorage(destinationFileNamePath, destinationSheetName, mockExcelWriterFactory)
+		suite := getTransactionStorageSuite(ctrl)
 
 		transactions := []Transaction{}
 
-		mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(nil, fmt.Errorf("new error"))
+		suite.mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(nil, fmt.Errorf("new error"))
 
-		err := transactionStorage.StoreTransactions(transactions)
+		err := suite.transactionStorage.StoreTransactions(transactions)
 
 		g.Expect(err).Should(Not(BeNil()))
 		g.Expect(err.Error()).Should(Equal("new error"))
@@ -93,13 +107,7 @@ func TestTransactionStorage_StoreTransactions(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockExcelWriterFactory := NewMockExcelWriterFactory(ctrl)
-		mockExcelWriter := NewMockExcelWriter(ctrl)
-
-		destinationFileNamePath := "test.xlsx"
-		destinationSheetName := "Sheet1"
-
-		transactionStorage := NewTransactionStorage(destinationFileNamePath, destinationSheetName, mockExcelWriterFactory)
+		suite := getTransactionStorageSuite(ctrl)
 
 		transactions := []Transaction{
 			{
@@ -110,22 +118,22 @@ func TestTransactionStorage_StoreTransactions(t *testing.T) {
 			},
 		}
 
-		mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(mockExcelWriter, nil)
-		mockExcelWriter.EXPECT().GetSheetIndex(destinationSheetName).Return(-1, nil)
-		mockExcelWriter.EXPECT().NewSheet(destinationSheetName).Return(1, nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A1", "Id").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B1", "Amount").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "C1", "Type").Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "D1", "Time").Return(nil)
+		suite.mockExcelWriterFactory.EXPECT().New(destinationFileNamePath).Return(suite.mockExcelWriter, nil)
+		suite.mockExcelWriter.EXPECT().GetSheetIndex(destinationSheetName).Return(-1, nil)
+		suite.mockExcelWriter.EXPECT().NewSheet(destinationSheetName).Return(1, nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A1", "Id").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B1", "Amount").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "C1", "Type").Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "D1", "Time").Return(nil)
 
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A2", transactions[0].Id).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B2", transactions[0].Amount).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "C2", string(transactions[0].Type)).Return(nil)
-		mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "D2", transactions[0].Time.Format(time.RFC3339)).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "A2", transactions[0].Id).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "B2", transactions[0].Amount).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "C2", string(transactions[0].Type)).Return(nil)
+		suite.mockExcelWriter.EXPECT().SetCellValue(destinationSheetName, "D2", transactions[0].Time.Format(time.RFC3339)).Return(nil)
 
-		mockExcelWriter.EXPECT().SaveAs(destinationFileNamePath).Return(fmt.Errorf("save error"))
+		suite.mockExcelWriter.EXPECT().SaveAs(destinationFileNamePath).Return(fmt.Errorf("save error"))
 
-		err := transactionStorage.StoreTransactions(transactions)
+		err := suite.transactionStorage.StoreTransactions(transactions)
 
 		g.Expect(err).Should(Not(BeNil()))
 		g.Expect(err.Error()).Should(Equal("save error"))
