@@ -51,7 +51,10 @@ func (t TransactionStorage) StoreTransactions(transactions []Transaction) error 
 	}
 
 	if index == -1 {
-		f.NewSheet(t.destinationSheetName)
+		_, errsSheet := f.NewSheet(t.destinationSheetName)
+		if errsSheet != nil {
+			return errsSheet
+		}
 	}
 
 	// header
@@ -83,6 +86,7 @@ func (t TransactionStorage) GetTransactions(filename string, startDate time.Time
 	if err != nil {
 		return nil, err
 	}
+	defer reader.Close()
 
 	records, err := reader.ReadAll()
 	if err != nil {

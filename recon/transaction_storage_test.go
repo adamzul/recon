@@ -142,8 +142,8 @@ func TestTransactionStorage_StoreTransactions(t *testing.T) {
 
 func TestTransactionStorage_GetTransactions(t *testing.T) {
 	filename := "test.xlsx"
-	startDate := time.Now().Add(-time.Hour * 24)
-	endDate := time.Now()
+	startDate, _ := time.Parse(time.DateOnly, "2025-08-28")
+	endDate, _ := time.Parse(time.DateOnly, "2025-08-29")
 
 	t.Run("should get transactions successfully", func(t *testing.T) {
 		g := NewGomegaWithT(t)
@@ -154,8 +154,6 @@ func TestTransactionStorage_GetTransactions(t *testing.T) {
 		suite := getTransactionStorageSuite(ctrl)
 
 		filename := "test.xlsx"
-		startDate, _ := time.Parse(time.DateOnly, "2025-08-28")
-		endDate, _ := time.Parse(time.DateOnly, "2025-08-29")
 
 		mockRecords := [][]string{
 			{"Id", "Amount", "Type", "Time"},
@@ -165,6 +163,7 @@ func TestTransactionStorage_GetTransactions(t *testing.T) {
 
 		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
 		suite.mockReader.EXPECT().ReadAll().Return(mockRecords, nil)
+		suite.mockReader.EXPECT().Close().Return(nil)
 
 		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
 
@@ -205,6 +204,7 @@ func TestTransactionStorage_GetTransactions(t *testing.T) {
 
 		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
 		suite.mockReader.EXPECT().ReadAll().Return(nil, fmt.Errorf("read all error"))
+		suite.mockReader.EXPECT().Close().Return(nil)
 
 		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
 
@@ -227,6 +227,7 @@ func TestTransactionStorage_GetTransactions(t *testing.T) {
 
 		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
 		suite.mockReader.EXPECT().ReadAll().Return(mockRecords, nil)
+		suite.mockReader.EXPECT().Close().Return(nil)
 
 		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
 
@@ -250,6 +251,7 @@ func TestTransactionStorage_GetTransactions(t *testing.T) {
 
 		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
 		suite.mockReader.EXPECT().ReadAll().Return(mockRecords, nil)
+		suite.mockReader.EXPECT().Close().Return(nil)
 
 		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
 
@@ -273,6 +275,7 @@ func TestTransactionStorage_GetTransactions(t *testing.T) {
 
 		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
 		suite.mockReader.EXPECT().ReadAll().Return(mockRecords, nil)
+		suite.mockReader.EXPECT().Close().Return(nil)
 
 		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
 
@@ -300,6 +303,7 @@ func TestTransactionStorage_GetTransactions(t *testing.T) {
 
 		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
 		suite.mockReader.EXPECT().ReadAll().Return(mockRecords, nil)
+		suite.mockReader.EXPECT().Close().Return(nil)
 
 		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
 

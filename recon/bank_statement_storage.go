@@ -1,9 +1,7 @@
 package recon
 
 import (
-	"encoding/csv"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -44,22 +42,26 @@ func (b *BankStatementGroup) SetAppearMultiple() {
 
 type BankStatementStorage struct {
 	destinationFileNamePath string
+
+	excelWriterFactory ExcelWriterFactory
+	readerFactory      ReaderFactory
 }
 
-func NewBankStatementStorage(destinationFileNamePath string) BankStatementStorage {
+func NewBankStatementStorage(destinationFileNamePath string, excelWriterFactory ExcelWriterFactory, readerFactory ReaderFactory) BankStatementStorage {
 	return BankStatementStorage{
 		destinationFileNamePath: destinationFileNamePath,
+		excelWriterFactory:      excelWriterFactory,
+		readerFactory:           readerFactory,
 	}
 }
 
-func (BankStatementStorage) GetBankStatements(filename string, startDate time.Time, endDate time.Time) ([]BankStatement, error) {
-	file, err := os.Open(filename)
+func (b BankStatementStorage) GetBankStatements(filename string, startDate time.Time, endDate time.Time) ([]BankStatement, error) {
+	reader, err := b.readerFactory.NewReader(filename)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer reader.Close()
 
-	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, err
@@ -104,10 +106,9 @@ func (BankStatementStorage) GetBankStatements(filename string, startDate time.Ti
 }
 
 func (b BankStatementStorage) StoreBankStatements(statements []BankStatement, appearMultiple bool, bankName string) error {
-	f, err := excelize.OpenFile(b.destinationFileNamePath) // open existing file
+	f, err := b.excelWriterFactory.New(b.destinationFileNamePath) // open existing file
 	if err != nil {
-		// if not exist, create new
-		f = excelize.NewFile()
+		return err
 	}
 
 	index, err := f.GetSheetIndex(bankName)
@@ -116,7 +117,10 @@ func (b BankStatementStorage) StoreBankStatements(statements []BankStatement, ap
 	}
 
 	if index == -1 {
-		f.NewSheet(bankName)
+		_, errSheet := f.NewSheet(bankName)
+		if errSheet != nil {
+			return errSheet
+		}
 	}
 
 	// Write header row
