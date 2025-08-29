@@ -3,8 +3,11 @@ package main
 import (
 	"flag"
 	"log"
+	"recon/recon"
 	"time"
 )
+
+const reconPath = "data/recon.xlsx"
 
 func main() {
 	var transactionPath, bankStatementPaths string
@@ -26,18 +29,11 @@ func main() {
 		return
 	}
 
-	reconExecutor := ReconExecutor{
-		transactionRepo: TransactionRepo{
-			fileNamePath: reconPath,
-			sheetName:    "Transaction",
-		},
-		bankStatementRepo: BankStatementRepo{
-			fileNamePath: reconPath,
-		},
-		summaryRepo: SummaryRepo{
-			fileNamePath: reconPath,
-			sheetName:    "Summary",
-		},
-	}
+	reconExecutor := recon.NewReconExecutor(
+		recon.NewTransactionStorage(reconPath, "Transaction"),
+		recon.NewBankStatementStorage(reconPath),
+		recon.NewSummaryStorage(reconPath, "Summary"),
+	)
+
 	reconExecutor.Execute(transactionPath, bankStatementPaths, startDate, endDate)
 }

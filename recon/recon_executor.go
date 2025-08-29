@@ -1,4 +1,4 @@
-package main
+package recon
 
 import (
 	"log"
@@ -8,7 +8,6 @@ import (
 	"github.com/samber/lo"
 )
 
-const reconPath = "data/recon.xlsx"
 
 type bankStatementDisrepancyGroup struct {
 	Statements     []BankStatement
@@ -24,9 +23,17 @@ func (b *bankStatementDisrepancyGroup) SetAppearMultiple(isAppearMultipleTime bo
 }
 
 type ReconExecutor struct {
-	transactionRepo   TransactionRepo
-	bankStatementRepo BankStatementRepo
-	summaryRepo       SummaryRepo
+	transactionRepo   TransactionStorage
+	bankStatementRepo BankStatementStorage
+	summaryRepo       SummaryStorage
+}
+
+func NewReconExecutor(transactionRepo TransactionStorage, bankStatementRepo BankStatementStorage, summaryRepo SummaryStorage) ReconExecutor {
+	return ReconExecutor{
+		transactionRepo:   transactionRepo,
+		bankStatementRepo: bankStatementRepo,
+		summaryRepo:       summaryRepo,
+	}
 }
 
 func (r ReconExecutor) Execute(transactionPath, bankStatementPaths string, startDate, endDate time.Time) {
@@ -85,10 +92,10 @@ func (r ReconExecutor) Execute(transactionPath, bankStatementPaths string, start
 		}
 	}
 
-	r.summaryRepo.WriteSummary(total)
+	r.summaryRepo.StoreSummary(total)
 
-	r.transactionRepo.WriteTransactions(transactionDiscrepancies)
+	r.transactionRepo.StoreTransactions(transactionDiscrepancies)
 	for bank, group := range bankStatementDisrepancy {
-		r.bankStatementRepo.WriteBankStatements(group.Statements, group.AppearMultiple, bank)
+		r.bankStatementRepo.StoreBankStatements(group.Statements, group.AppearMultiple, bank)
 	}
 }

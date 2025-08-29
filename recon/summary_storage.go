@@ -1,4 +1,4 @@
-package main
+package recon
 
 import "github.com/xuri/excelize/v2"
 
@@ -10,24 +10,31 @@ type Summary struct {
 	TotalProcessed            int
 }
 
-type SummaryRepo struct {
-	fileNamePath string
-	sheetName    string
+type SummaryStorage struct {
+	destinationFileNamePath string
+	destinationSheetName    string
 }
 
-func (s SummaryRepo) WriteSummary(total Summary) error {
-	f, err := excelize.OpenFile(s.fileNamePath)
+func NewSummaryStorage(destinationFileNamePath string, destinationSheetName string) SummaryStorage {
+	return SummaryStorage{
+		destinationFileNamePath: destinationFileNamePath,
+		destinationSheetName:    destinationSheetName,
+	}
+}
+
+func (s SummaryStorage) StoreSummary(total Summary) error {
+	f, err := excelize.OpenFile(s.destinationFileNamePath)
 	if err != nil {
 		f = excelize.NewFile()
 	}
 
-	index, err := f.GetSheetIndex(s.sheetName)
+	index, err := f.GetSheetIndex(s.destinationSheetName)
 	if err != nil {
 		return err
 	}
 
 	if index == -1 {
-		f.NewSheet(s.sheetName)
+		f.NewSheet(s.destinationSheetName)
 	}
 
 	// key-value pairs
@@ -43,9 +50,9 @@ func (s SummaryRepo) WriteSummary(total Summary) error {
 	for i, row := range rows {
 		for j, v := range row {
 			cell, _ := excelize.CoordinatesToCellName(j+1, i+1)
-			f.SetCellValue(s.sheetName, cell, v)
+			f.SetCellValue(s.destinationSheetName, cell, v)
 		}
 	}
 
-	return f.SaveAs(s.fileNamePath)
+	return f.SaveAs(s.destinationFileNamePath)
 }

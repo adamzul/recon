@@ -1,4 +1,4 @@
-package main
+package recon
 
 import (
 	"encoding/csv"
@@ -24,32 +24,39 @@ type Transaction struct {
 	Time   time.Time
 }
 
-type TransactionRepo struct {
-	fileNamePath string
-	sheetName    string
+type TransactionStorage struct {
+	destinationFileNamePath string
+	destinationSheetName    string
 }
 
-func (t TransactionRepo) WriteTransactions(transactions []Transaction) error {
-	f, err := excelize.OpenFile(t.fileNamePath) // open existing file
+func NewTransactionStorage(destinationFileNamePath string, destinationSheetName string) TransactionStorage {
+	return TransactionStorage{
+		destinationFileNamePath: destinationFileNamePath,
+		destinationSheetName:    destinationSheetName,
+	}
+}
+
+func (t TransactionStorage) StoreTransactions(transactions []Transaction) error {
+	f, err := excelize.OpenFile(t.destinationFileNamePath) // open existing file
 	if err != nil {
 		// if not exist, create new
 		f = excelize.NewFile()
 	}
 
-	index, err := f.GetSheetIndex(t.sheetName)
+	index, err := f.GetSheetIndex(t.destinationSheetName)
 	if err != nil {
 		return err
 	}
 
 	if index == -1 {
-		f.NewSheet(t.sheetName)
+		f.NewSheet(t.destinationSheetName)
 	}
 
 	// header
 	headers := []string{"Id", "Amount", "Type", "Time"}
 	for i, h := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
-		f.SetCellValue(t.sheetName, cell, h)
+		f.SetCellValue(t.destinationSheetName, cell, h)
 	}
 
 	// rows
@@ -62,13 +69,14 @@ func (t TransactionRepo) WriteTransactions(transactions []Transaction) error {
 		}
 		for col, v := range values {
 			cell, _ := excelize.CoordinatesToCellName(col+1, row+2)
-			f.SetCellValue(t.sheetName, cell, v)
+			f.SetCellValue(t.destinationSheetName, cell, v)
 		}
 	}
 
-	return f.SaveAs(t.fileNamePath)
+	return f.SaveAs(t.destinationFileNamePath)
 }
-func (TransactionRepo) GetTransactions(filename string, startDate time.Time, endDate time.Time) ([]Transaction, error) {
+
+func (TransactionStorage) GetTransactions(filename string, startDate time.Time, endDate time.Time) ([]Transaction, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err

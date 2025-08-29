@@ -1,4 +1,4 @@
-package main
+package recon
 
 import (
 	"encoding/csv"
@@ -42,11 +42,17 @@ func (b *BankStatementGroup) SetAppearMultiple() {
 	b.AppearMultiple = true
 }
 
-type BankStatementRepo struct {
-	fileNamePath string
+type BankStatementStorage struct {
+	destinationFileNamePath string
 }
 
-func (BankStatementRepo) GetBankStatements(filename string, startDate time.Time, endDate time.Time) ([]BankStatement, error) {
+func NewBankStatementStorage(destinationFileNamePath string) BankStatementStorage {
+	return BankStatementStorage{
+		destinationFileNamePath: destinationFileNamePath,
+	}
+}
+
+func (BankStatementStorage) GetBankStatements(filename string, startDate time.Time, endDate time.Time) ([]BankStatement, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -97,8 +103,8 @@ func (BankStatementRepo) GetBankStatements(filename string, startDate time.Time,
 	return statements, nil
 }
 
-func (b BankStatementRepo) WriteBankStatements(statements []BankStatement, appearMultiple bool, bankName string) error {
-	f, err := excelize.OpenFile(b.fileNamePath) // open existing file
+func (b BankStatementStorage) StoreBankStatements(statements []BankStatement, appearMultiple bool, bankName string) error {
+	f, err := excelize.OpenFile(b.destinationFileNamePath) // open existing file
 	if err != nil {
 		// if not exist, create new
 		f = excelize.NewFile()
@@ -136,7 +142,7 @@ func (b BankStatementRepo) WriteBankStatements(statements []BankStatement, appea
 	}
 
 	// Save file
-	if err := f.SaveAs(b.fileNamePath); err != nil {
+	if err := f.SaveAs(b.destinationFileNamePath); err != nil {
 		return err
 	}
 	return nil
