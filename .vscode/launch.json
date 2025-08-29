@@ -12,9 +12,9 @@
       "program": "${workspaceFolder}",
       "args": [
         "-transaction-path",
-        "transaction.csv",
+        "data/transaction.csv",
         "-bank-statement-paths",
-        "bca.csv,bri.csv",
+        "data/bca.csv,data/bri.csv",
         "-start-date",
         "2025-01-01",
         "-end-date",

@@ -8,6 +8,8 @@ import (
 	"github.com/samber/lo"
 )
 
+const reconPath = "data/recon.xlsx"
+
 type bankStatementDisrepancyGroup struct {
 	Statements     []BankStatement
 	AppearMultiple bool
@@ -83,10 +85,10 @@ func (r ReconExecutor) Execute(transactionPath, bankStatementPaths string, start
 		}
 	}
 
-	r.summaryRepo.WriteSummary("recon.xlsx", "summary", total)
+	r.summaryRepo.WriteSummary(reconPath, "summary", total)
 
-	r.transactionRepo.WriteTransactions("recon.xlsx", transactionDiscrepancies, "transaction")
+	r.transactionRepo.WriteTransactions(reconPath, transactionDiscrepancies, "transaction")
 	for bank, group := range bankStatementDisrepancy {
-		r.bankStatementRepo.WriteBankStatements("recon.xlsx", group.Statements, group.AppearMultiple, bank)
+		r.bankStatementRepo.WriteBankStatements(reconPath, group.Statements, group.AppearMultiple, bank)
 	}
 }
