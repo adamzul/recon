@@ -43,6 +43,7 @@ func (b *BankStatementGroup) SetAppearMultiple() {
 }
 
 type BankStatementRepo struct {
+	fileNamePath string
 }
 
 func (BankStatementRepo) GetBankStatements(filename string, startDate time.Time, endDate time.Time) ([]BankStatement, error) {
@@ -96,27 +97,27 @@ func (BankStatementRepo) GetBankStatements(filename string, startDate time.Time,
 	return statements, nil
 }
 
-func (BankStatementRepo) WriteBankStatements(path string, statements []BankStatement, appearMultiple bool, sheet string) error {
-	f, err := excelize.OpenFile(path) // open existing file
+func (b BankStatementRepo) WriteBankStatements(statements []BankStatement, appearMultiple bool, bankName string) error {
+	f, err := excelize.OpenFile(b.fileNamePath) // open existing file
 	if err != nil {
 		// if not exist, create new
 		f = excelize.NewFile()
 	}
 
-	index, err := f.GetSheetIndex(sheet)
+	index, err := f.GetSheetIndex(bankName)
 	if err != nil {
 		return err
 	}
 
 	if index == -1 {
-		f.NewSheet(sheet)
+		f.NewSheet(bankName)
 	}
 
 	// Write header row
 	headers := []string{"Bank", "ID", "Amount", "Time", "Appear Multiple Time"}
 	for i, h := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1) // row 1
-		f.SetCellValue(sheet, cell, h)
+		f.SetCellValue(bankName, cell, h)
 	}
 
 	// Write each BankStatement
@@ -130,12 +131,12 @@ func (BankStatementRepo) WriteBankStatements(path string, statements []BankState
 		}
 		for col, v := range values {
 			cell, _ := excelize.CoordinatesToCellName(col+1, row+2) // data starts at row 2
-			f.SetCellValue(sheet, cell, v)
+			f.SetCellValue(bankName, cell, v)
 		}
 	}
 
 	// Save file
-	if err := f.SaveAs(path); err != nil {
+	if err := f.SaveAs(b.fileNamePath); err != nil {
 		return err
 	}
 	return nil

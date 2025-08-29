@@ -85,10 +85,10 @@ func (r ReconExecutor) Execute(transactionPath, bankStatementPaths string, start
 		}
 	}
 
-	r.summaryRepo.WriteSummary(reconPath, "summary", total)
+	r.summaryRepo.WriteSummary(total)
 
-	r.transactionRepo.WriteTransactions(reconPath, transactionDiscrepancies, "transaction")
+	r.transactionRepo.WriteTransactions(transactionDiscrepancies)
 	for bank, group := range bankStatementDisrepancy {
-		r.bankStatementRepo.WriteBankStatements(reconPath, group.Statements, group.AppearMultiple, bank)
+		r.bankStatementRepo.WriteBankStatements(group.Statements, group.AppearMultiple, bank)
 	}
 }

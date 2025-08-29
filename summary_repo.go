@@ -11,21 +11,23 @@ type Summary struct {
 }
 
 type SummaryRepo struct {
+	fileNamePath string
+	sheetName    string
 }
 
-func (SummaryRepo) WriteSummary(path, sheet string, total Summary) error {
-	f, err := excelize.OpenFile(path)
+func (s SummaryRepo) WriteSummary(total Summary) error {
+	f, err := excelize.OpenFile(s.fileNamePath)
 	if err != nil {
 		f = excelize.NewFile()
 	}
 
-	index, err := f.GetSheetIndex(sheet)
+	index, err := f.GetSheetIndex(s.sheetName)
 	if err != nil {
 		return err
 	}
 
 	if index == -1 {
-		f.NewSheet(sheet)
+		f.NewSheet(s.sheetName)
 	}
 
 	// key-value pairs
@@ -41,9 +43,9 @@ func (SummaryRepo) WriteSummary(path, sheet string, total Summary) error {
 	for i, row := range rows {
 		for j, v := range row {
 			cell, _ := excelize.CoordinatesToCellName(j+1, i+1)
-			f.SetCellValue(sheet, cell, v)
+			f.SetCellValue(s.sheetName, cell, v)
 		}
 	}
 
-	return f.SaveAs(path)
+	return f.SaveAs(s.fileNamePath)
 }

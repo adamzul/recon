@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-
 func main() {
 	var transactionPath, bankStatementPaths string
 	var startDateStr, endDateStr string
@@ -28,9 +27,17 @@ func main() {
 	}
 
 	reconExecutor := ReconExecutor{
-		transactionRepo:   TransactionRepo{},
-		bankStatementRepo: BankStatementRepo{},
-		summaryRepo:       SummaryRepo{},
+		transactionRepo: TransactionRepo{
+			fileNamePath: reconPath,
+			sheetName:    "Transaction",
+		},
+		bankStatementRepo: BankStatementRepo{
+			fileNamePath: reconPath,
+		},
+		summaryRepo: SummaryRepo{
+			fileNamePath: reconPath,
+			sheetName:    "Summary",
+		},
 	}
 	reconExecutor.Execute(transactionPath, bankStatementPaths, startDate, endDate)
 }

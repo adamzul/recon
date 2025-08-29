@@ -25,29 +25,31 @@ type Transaction struct {
 }
 
 type TransactionRepo struct {
+	fileNamePath string
+	sheetName    string
 }
 
-func (TransactionRepo) WriteTransactions(path string, transactions []Transaction, sheet string) error {
-	f, err := excelize.OpenFile(path) // open existing file
+func (t TransactionRepo) WriteTransactions(transactions []Transaction) error {
+	f, err := excelize.OpenFile(t.fileNamePath) // open existing file
 	if err != nil {
 		// if not exist, create new
 		f = excelize.NewFile()
 	}
 
-	index, err := f.GetSheetIndex(sheet)
+	index, err := f.GetSheetIndex(t.sheetName)
 	if err != nil {
 		return err
 	}
 
 	if index == -1 {
-		f.NewSheet(sheet)
+		f.NewSheet(t.sheetName)
 	}
 
 	// header
 	headers := []string{"Id", "Amount", "Type", "Time"}
 	for i, h := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
-		f.SetCellValue(sheet, cell, h)
+		f.SetCellValue(t.sheetName, cell, h)
 	}
 
 	// rows
@@ -60,11 +62,11 @@ func (TransactionRepo) WriteTransactions(path string, transactions []Transaction
 		}
 		for col, v := range values {
 			cell, _ := excelize.CoordinatesToCellName(col+1, row+2)
-			f.SetCellValue(sheet, cell, v)
+			f.SetCellValue(t.sheetName, cell, v)
 		}
 	}
 
-	return f.SaveAs(path)
+	return f.SaveAs(t.fileNamePath)
 }
 func (TransactionRepo) GetTransactions(filename string, startDate time.Time, endDate time.Time) ([]Transaction, error) {
 	file, err := os.Open(filename)
