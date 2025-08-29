@@ -12,42 +12,10 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func writeTotalKeyValueToExcel(path, sheet string, total Total) error {
-	f, err := excelize.OpenFile(path)
-	if err != nil {
-		f = excelize.NewFile()
-	}
-
-	index, err := f.GetSheetIndex(sheet)
-	if err != nil {
-		return err
-	}
-
-	if index == -1 {
-		f.NewSheet(sheet)
-	}
-
-	// key-value pairs
-	rows := [][]interface{}{
-		{"Total Amount Transactions", total.TotalAmountTransactions},
-		{"Total Amount Bank Statements", total.TotalAmountBankStatements},
-		{"Total Matched", total.TotalMatched},
-		{"Total Unmatched", total.TotalUnmatched},
-		{"Total Processed", total.TotalProcessed},
-		{"Total Amount Dicrepancy", total.TotalAmountTransactions - total.TotalAmountBankStatements},
-	}
-
-	for i, row := range rows {
-		for j, v := range row {
-			cell, _ := excelize.CoordinatesToCellName(j+1, i+1)
-			f.SetCellValue(sheet, cell, v)
-		}
-	}
-
-	return f.SaveAs(path)
+type TransactionRepo struct {
 }
 
-func writeTransactionsToExcel(path string, transactions []Transaction, sheet string) error {
+func (TransactionRepo) WriteTransactions(path string, transactions []Transaction, sheet string) error {
 	f, err := excelize.OpenFile(path) // open existing file
 	if err != nil {
 		// if not exist, create new
@@ -86,7 +54,7 @@ func writeTransactionsToExcel(path string, transactions []Transaction, sheet str
 
 	return f.SaveAs(path)
 }
-func readTransactionsFromCSV(filename string, startDate time.Time, endDate time.Time) ([]Transaction, error) {
+func (TransactionRepo) GetTransactions(filename string, startDate time.Time, endDate time.Time) ([]Transaction, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -132,7 +100,48 @@ func readTransactionsFromCSV(filename string, startDate time.Time, endDate time.
 	return transactions, nil
 }
 
-func readBankStatementsFromCSV(filename string, startDate time.Time, endDate time.Time) ([]BankStatement, error) {
+type SummaryRepo struct {
+}
+
+func (SummaryRepo) WriteSummary(path, sheet string, total Summary) error {
+	f, err := excelize.OpenFile(path)
+	if err != nil {
+		f = excelize.NewFile()
+	}
+
+	index, err := f.GetSheetIndex(sheet)
+	if err != nil {
+		return err
+	}
+
+	if index == -1 {
+		f.NewSheet(sheet)
+	}
+
+	// key-value pairs
+	rows := [][]interface{}{
+		{"Total Amount Transactions", total.TotalAmountTransactions},
+		{"Total Amount Bank Statements", total.TotalAmountBankStatements},
+		{"Total Matched", total.TotalMatched},
+		{"Total Unmatched", total.TotalUnmatched},
+		{"Total Processed", total.TotalProcessed},
+		{"Total Amount Dicrepancy", total.TotalAmountTransactions - total.TotalAmountBankStatements},
+	}
+
+	for i, row := range rows {
+		for j, v := range row {
+			cell, _ := excelize.CoordinatesToCellName(j+1, i+1)
+			f.SetCellValue(sheet, cell, v)
+		}
+	}
+
+	return f.SaveAs(path)
+}
+
+type BankStatementRepo struct {
+}
+
+func (BankStatementRepo) GetBankStatements(filename string, startDate time.Time, endDate time.Time) ([]BankStatement, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -183,7 +192,7 @@ func readBankStatementsFromCSV(filename string, startDate time.Time, endDate tim
 	return statements, nil
 }
 
-func writeBankStatementsToExcel(path string, statements []BankStatement, appearMultiple bool, sheet string) error {
+func (BankStatementRepo) WriteBankStatements(path string, statements []BankStatement, appearMultiple bool, sheet string) error {
 	f, err := excelize.OpenFile(path) // open existing file
 	if err != nil {
 		// if not exist, create new

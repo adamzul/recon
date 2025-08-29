@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -53,12 +53,25 @@ func (b *BankStatementGroup) SetAppearMultiple() {
 	b.AppearMultiple = true
 }
 
-type Total struct {
+type Summary struct {
 	TotalAmountTransactions   float64
 	TotalAmountBankStatements float64
 	TotalMatched              int
 	TotalUnmatched            int
 	TotalProcessed            int
+}
+
+type bankStatementDisrepancyGroup struct {
+	Statements     []BankStatement
+	AppearMultiple bool
+}
+
+func (b *bankStatementDisrepancyGroup) Add(statement BankStatement) {
+	b.Statements = append(b.Statements, statement)
+}
+
+func (b *bankStatementDisrepancyGroup) SetAppearMultiple(isAppearMultipleTime bool) {
+	b.AppearMultiple = isAppearMultipleTime
 }
 
 func main() {
@@ -72,29 +85,44 @@ func main() {
 
 	startDate, err := time.Parse("2006-01-02", startDateStr)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 	endDate, err := time.Parse("2006-01-02", endDateStr)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 
-	transactions, err := readTransactionsFromCSV(transactionPath, startDate, endDate)
+	reconExecutor := ReconExecutor{
+		transactionRepo:   TransactionRepo{},
+		bankStatementRepo: BankStatementRepo{},
+		summaryRepo:       SummaryRepo{},
+	}
+	reconExecutor.Execute(transactionPath, bankStatementPaths, startDate, endDate)
+}
+
+type ReconExecutor struct {
+	transactionRepo   TransactionRepo
+	bankStatementRepo BankStatementRepo
+	summaryRepo       SummaryRepo
+}
+
+func (r ReconExecutor) Execute(transactionPath, bankStatementPaths string, startDate, endDate time.Time) {
+	transactions, err := r.transactionRepo.GetTransactions(transactionPath, startDate, endDate)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 
-	total := Total{TotalProcessed: len(transactions)}
+	total := Summary{TotalProcessed: len(transactions)}
 
 	bankStatementMap := map[float64]*BankStatementGroup{}
 	bankStatementPathArray := strings.Split(bankStatementPaths, ",")
 	for _, path := range bankStatementPathArray {
-		statements, err := readBankStatementsFromCSV(path, startDate, endDate)
+		statements, err := r.bankStatementRepo.GetBankStatements(path, startDate, endDate)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			return
 		}
 
@@ -136,23 +164,10 @@ func main() {
 		}
 	}
 
-	writeTotalKeyValueToExcel("recon.xlsx", "summary", total)
+	r.summaryRepo.WriteSummary("recon.xlsx", "summary", total)
 
-	writeTransactionsToExcel("recon.xlsx", transactionDiscrepancies, "transaction")
+	r.transactionRepo.WriteTransactions("recon.xlsx", transactionDiscrepancies, "transaction")
 	for bank, group := range bankStatementDisrepancy {
-		writeBankStatementsToExcel("recon.xlsx", group.Statements, group.AppearMultiple, bank)
+		r.bankStatementRepo.WriteBankStatements("recon.xlsx", group.Statements, group.AppearMultiple, bank)
 	}
-}
-
-type bankStatementDisrepancyGroup struct {
-	Statements     []BankStatement
-	AppearMultiple bool
-}
-
-func (b *bankStatementDisrepancyGroup) Add(statement BankStatement) {
-	b.Statements = append(b.Statements, statement)
-}
-
-func (b *bankStatementDisrepancyGroup) SetAppearMultiple(isAppearMultipleTime bool) {
-	b.AppearMultiple = isAppearMultipleTime
 }
