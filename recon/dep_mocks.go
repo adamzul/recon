@@ -349,6 +349,44 @@ func (m *MockReader) EXPECT() *MockReaderMockRecorder {
 	return m.recorder
 }
 
+// Close mocks base method.
+func (m *MockReader) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockReaderMockRecorder) Close() *MockReaderCloseCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockReader)(nil).Close))
+	return &MockReaderCloseCall{Call: call}
+}
+
+// MockReaderCloseCall wrap *gomock.Call
+type MockReaderCloseCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockReaderCloseCall) Return(arg0 error) *MockReaderCloseCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockReaderCloseCall) Do(f func() error) *MockReaderCloseCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockReaderCloseCall) DoAndReturn(f func() error) *MockReaderCloseCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
 // ReadAll mocks base method.
 func (m *MockReader) ReadAll() ([][]string, error) {
 	m.ctrl.T.Helper()

@@ -23,6 +23,7 @@ func (ExcelFactory) New(path string) (ExcelWriter, error) {
 
 type CSVReader struct {
 	*csv.Reader
+	*os.File
 }
 
 type CSVReaderFactory struct{}
@@ -34,5 +35,5 @@ func (CSVReaderFactory) NewReader(filename string) (Reader, error) {
 	}
 
 	reader := csv.NewReader(file)
-	return &CSVReader{reader}, nil
+	return &CSVReader{reader, file}, nil
 }

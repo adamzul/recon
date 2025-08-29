@@ -20,4 +20,5 @@ type ReaderFactory interface {
 
 type Reader interface {
 	ReadAll() ([][]string, error)
+	Close() error
 }

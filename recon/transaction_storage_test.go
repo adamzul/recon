@@ -139,3 +139,172 @@ func TestTransactionStorage_StoreTransactions(t *testing.T) {
 		g.Expect(err.Error()).Should(Equal("save error"))
 	})
 }
+
+func TestTransactionStorage_GetTransactions(t *testing.T) {
+	filename := "test.xlsx"
+	startDate := time.Now().Add(-time.Hour * 24)
+	endDate := time.Now()
+
+	t.Run("should get transactions successfully", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		suite := getTransactionStorageSuite(ctrl)
+
+		filename := "test.xlsx"
+		startDate, _ := time.Parse(time.DateOnly, "2025-08-28")
+		endDate, _ := time.Parse(time.DateOnly, "2025-08-29")
+
+		mockRecords := [][]string{
+			{"Id", "Amount", "Type", "Time"},
+			{"1", "100.0", "credit", startDate.Format(time.RFC3339)},
+			{"2", "200.0", "debit", endDate.Format(time.RFC3339)},
+		}
+
+		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
+		suite.mockReader.EXPECT().ReadAll().Return(mockRecords, nil)
+
+		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
+
+		g.Expect(err).Should(BeNil())
+		g.Expect(transactions).Should(HaveLen(2))
+		g.Expect(transactions[0].Id).Should(Equal("1"))
+		g.Expect(transactions[0].Amount).Should(Equal(100.0))
+		g.Expect(transactions[0].Type).Should(Equal(TransactionType("credit")))
+		g.Expect(transactions[1].Id).Should(Equal("2"))
+		g.Expect(transactions[1].Amount).Should(Equal(200.0))
+		g.Expect(transactions[1].Type).Should(Equal(TransactionType("debit")))
+	})
+
+	t.Run("should return error when readerFactory.NewReader returns error", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		suite := getTransactionStorageSuite(ctrl)
+
+		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(nil, fmt.Errorf("new reader error"))
+
+		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
+
+		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err.Error()).Should(Equal("new reader error"))
+		g.Expect(transactions).Should(BeNil())
+	})
+
+	t.Run("should return error when reader.ReadAll returns error", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		suite := getTransactionStorageSuite(ctrl)
+
+		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
+		suite.mockReader.EXPECT().ReadAll().Return(nil, fmt.Errorf("read all error"))
+
+		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
+
+		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err.Error()).Should(Equal("read all error"))
+		g.Expect(transactions).Should(BeNil())
+	})
+
+	t.Run("should return empty slice when no data rows found", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		suite := getTransactionStorageSuite(ctrl)
+
+		mockRecords := [][]string{
+			{"Id", "Amount", "Type", "Time"},
+		}
+
+		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
+		suite.mockReader.EXPECT().ReadAll().Return(mockRecords, nil)
+
+		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
+
+		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err.Error()).Should(Equal("no data rows found"))
+		g.Expect(transactions).Should(BeNil())
+	})
+
+	t.Run("should return error when invalid amount in row", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		suite := getTransactionStorageSuite(ctrl)
+
+		mockRecords := [][]string{
+			{"Id", "Amount", "Type", "Time"},
+			{"1", "invalid", "credit", startDate.Format(time.RFC3339)},
+		}
+
+		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
+		suite.mockReader.EXPECT().ReadAll().Return(mockRecords, nil)
+
+		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
+
+		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err.Error()).Should(ContainSubstring("invalid amount in row"))
+		g.Expect(transactions).Should(BeNil())
+	})
+
+	t.Run("should return error when invalid time format in row", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		suite := getTransactionStorageSuite(ctrl)
+
+		mockRecords := [][]string{
+			{"Id", "Amount", "Type", "Time"},
+			{"1", "100.0", "credit", "invalid"},
+		}
+
+		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
+		suite.mockReader.EXPECT().ReadAll().Return(mockRecords, nil)
+
+		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
+
+		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err.Error()).Should(ContainSubstring("invalid time format in row"))
+		g.Expect(transactions).Should(BeNil())
+	})
+
+	t.Run("should skip transactions outside the date range", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		suite := getTransactionStorageSuite(ctrl)
+
+		filename := "test.xlsx"
+		outsideDate := startDate.Add(-time.Hour * 48)
+
+		mockRecords := [][]string{
+			{"Id", "Amount", "Type", "Time"},
+			{"1", "100.0", "credit", outsideDate.Format(time.RFC3339)},
+			{"2", "200.0", "debit", endDate.Format(time.RFC3339)},
+		}
+
+		suite.mockReaderFactory.EXPECT().NewReader(filename).Return(suite.mockReader, nil)
+		suite.mockReader.EXPECT().ReadAll().Return(mockRecords, nil)
+
+		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
+
+		g.Expect(err).Should(BeNil())
+		g.Expect(transactions).Should(HaveLen(1))
+		g.Expect(transactions[0].Id).Should(Equal("2"))
+	})
+}
