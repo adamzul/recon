@@ -59,7 +59,7 @@ func TestBankStatementStorage_GetBankStatements(t *testing.T) {
 
 		statements, err := bankStatementStorage.GetBankStatements(filename, startDate, endDate)
 
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 		g.Expect(err.Error()).Should(Equal("new reader error"))
 		g.Expect(statements).Should(BeNil())
 	})
@@ -81,7 +81,7 @@ func TestBankStatementStorage_GetBankStatements(t *testing.T) {
 
 		statements, err := bankStatementStorage.GetBankStatements(filename, startDate, endDate)
 
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 		g.Expect(err.Error()).Should(Equal("read all error"))
 		g.Expect(statements).Should(BeNil())
 	})
@@ -107,7 +107,7 @@ func TestBankStatementStorage_GetBankStatements(t *testing.T) {
 
 		statements, err := bankStatementStorage.GetBankStatements(filename, startDate, endDate)
 
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 		g.Expect(err.Error()).Should(Equal(fmt.Sprintf("no data rows found in %s", filename)))
 		g.Expect(statements).Should(BeNil())
 	})
@@ -134,7 +134,7 @@ func TestBankStatementStorage_GetBankStatements(t *testing.T) {
 
 		statements, err := bankStatementStorage.GetBankStatements(filename, startDate, endDate)
 
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 		g.Expect(err.Error()).Should(ContainSubstring("invalid amount in row"))
 		g.Expect(statements).Should(BeNil())
 	})
@@ -161,7 +161,7 @@ func TestBankStatementStorage_GetBankStatements(t *testing.T) {
 
 		statements, err := bankStatementStorage.GetBankStatements(filename, startDate, endDate)
 
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 		g.Expect(err.Error()).Should(ContainSubstring("invalid time format in row"))
 		g.Expect(statements).Should(BeNil())
 	})
@@ -269,7 +269,7 @@ func TestBankStatementStorage_StoreBankStatements(t *testing.T) {
 
 		err := bankStatementStorage.StoreBankStatements(statements, bankName)
 
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 	})
 
 	t.Run("should return error when f.GetSheetIndex returns error", func(t *testing.T) {
@@ -291,7 +291,7 @@ func TestBankStatementStorage_StoreBankStatements(t *testing.T) {
 
 		err := bankStatementStorage.StoreBankStatements(statements, bankName)
 
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 	})
 
 	t.Run("should return error when f.NewSheet returns error", func(t *testing.T) {
@@ -314,7 +314,7 @@ func TestBankStatementStorage_StoreBankStatements(t *testing.T) {
 
 		err := bankStatementStorage.StoreBankStatements(statements, bankName)
 
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 	})
 
 	t.Run("should return error when f.SaveAs returns error", func(t *testing.T) {
@@ -355,6 +355,6 @@ func TestBankStatementStorage_StoreBankStatements(t *testing.T) {
 
 		err := bankStatementStorage.StoreBankStatements(statements, bankName)
 
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 	})
 }

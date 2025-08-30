@@ -88,7 +88,7 @@ func TestReconExecutor_Execute(t *testing.T) {
 		suite.mockTransactionStorage.EXPECT().GetTransactions(transactionPath, startDate, endDate).Return(nil, fmt.Errorf("get transactions error"))
 
 		err := suite.reconExecutor.Execute(transactionPath, bankStatementPaths, startDate, endDate)
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 	})
 
 	t.Run("should return error when GetBankStatements fails", func(t *testing.T) {
@@ -102,7 +102,7 @@ func TestReconExecutor_Execute(t *testing.T) {
 		suite.mockBankStatementRepoStorage.EXPECT().GetBankStatements("bca.xlsx", startDate, endDate).Return(nil, fmt.Errorf("get bank statements error"))
 
 		err := suite.reconExecutor.Execute(transactionPath, bankStatementPaths, startDate, endDate)
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 	})
 
 	t.Run("should return error when StoreSummary fails", func(t *testing.T) {
@@ -135,7 +135,7 @@ func TestReconExecutor_Execute(t *testing.T) {
 		suite.mockSummaryRepoStorage.EXPECT().StoreSummary(gomock.Eq(expectedSummary)).Return(fmt.Errorf("store summary error"))
 
 		err := suite.reconExecutor.Execute(transactionPath, bankStatementPaths, startDate, endDate)
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 	})
 
 	t.Run("should return error when StoreTransactions fails", func(t *testing.T) {
@@ -168,7 +168,7 @@ func TestReconExecutor_Execute(t *testing.T) {
 		suite.mockTransactionStorage.EXPECT().StoreTransactions(gomock.Eq([]Transaction{})).Return(fmt.Errorf("store transactions error"))
 
 		err := suite.reconExecutor.Execute(transactionPath, bankStatementPaths, startDate, endDate)
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 	})
 
 	t.Run("should return error when StoreBankStatements fails", func(t *testing.T) {
@@ -203,6 +203,6 @@ func TestReconExecutor_Execute(t *testing.T) {
 		suite.mockBankStatementRepoStorage.EXPECT().StoreBankStatements(gomock.Eq([]BankStatement{{Bank: "BCA", Amount: 100.0, Time: startDate}}), "BCA").Return(fmt.Errorf("store bank statements error"))
 
 		err := suite.reconExecutor.Execute(transactionPath, bankStatementPaths, startDate, endDate)
-		g.Expect(err).Should(Not(BeNil()))
+		g.Expect(err).ShouldNot(BeNil())
 	})
 }
