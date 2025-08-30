@@ -1,57 +1,47 @@
 package recon
 
 import (
-	"log"
-	"strings"
+	"fmt"
 	"time"
 
 	"github.com/samber/lo"
 )
 
-
 type bankStatementDisrepancyGroup struct {
-	Statements     []BankStatement
-	AppearMultiple bool
+	Statements []BankStatement
 }
 
 func (b *bankStatementDisrepancyGroup) Add(statement BankStatement) {
 	b.Statements = append(b.Statements, statement)
 }
 
-func (b *bankStatementDisrepancyGroup) SetAppearMultiple(isAppearMultipleTime bool) {
-	b.AppearMultiple = isAppearMultipleTime
-}
-
 type ReconExecutor struct {
-	transactionRepo   TransactionStorage
-	bankStatementRepo BankStatementStorage
-	summaryRepo       SummaryStorage
+	transactionStorage       TransactionStorageProvider
+	bankStatementRepoStorage BankStatementStorageProvider
+	summaryRepoStorage       SummaryStorageProvider
 }
 
-func NewReconExecutor(transactionRepo TransactionStorage, bankStatementRepo BankStatementStorage, summaryRepo SummaryStorage) ReconExecutor {
+func NewReconExecutor(transactionRepo TransactionStorageProvider, bankStatementRepo BankStatementStorageProvider, summaryRepo SummaryStorageProvider) ReconExecutor {
 	return ReconExecutor{
-		transactionRepo:   transactionRepo,
-		bankStatementRepo: bankStatementRepo,
-		summaryRepo:       summaryRepo,
+		transactionStorage:       transactionRepo,
+		bankStatementRepoStorage: bankStatementRepo,
+		summaryRepoStorage:       summaryRepo,
 	}
 }
 
-func (r ReconExecutor) Execute(transactionPath, bankStatementPaths string, startDate, endDate time.Time) {
-	transactions, err := r.transactionRepo.GetTransactions(transactionPath, startDate, endDate)
+func (r ReconExecutor) Execute(transactionPath string, bankStatementPathArray []string, startDate time.Time, endDate time.Time) error {
+	transactions, err := r.transactionStorage.GetTransactions(transactionPath, startDate, endDate)
 	if err != nil {
-		log.Println(err)
-		return
+		return fmt.Errorf("get transactions error: %w", err)
 	}
 
 	total := Summary{TotalProcessed: len(transactions)}
 
 	bankStatementMap := map[float64]*BankStatementGroup{}
-	bankStatementPathArray := strings.Split(bankStatementPaths, ",")
 	for _, path := range bankStatementPathArray {
-		statements, err := r.bankStatementRepo.GetBankStatements(path, startDate, endDate)
+		statements, err := r.bankStatementRepoStorage.GetBankStatements(path, startDate, endDate)
 		if err != nil {
-			log.Println(err)
-			return
+			return fmt.Errorf("get bank statements error: %w", err)
 		}
 
 		for _, statement := range statements {
@@ -63,7 +53,6 @@ func (r ReconExecutor) Execute(transactionPath, bankStatementPaths string, start
 		}
 	}
 
-	//recon
 	transactionDiscrepancies := lo.Filter(transactions, func(t Transaction, i int) bool {
 		total.TotalAmountTransactions += t.Amount
 		bankStatements := bankStatementMap[t.Amount]
@@ -85,17 +74,28 @@ func (r ReconExecutor) Execute(transactionPath, bankStatementPaths string, start
 					bankStatementDisrepancy[statement.Bank] = &bankStatementDisrepancyGroup{}
 				}
 				bankStatementDisrepancy[statement.Bank].Add(statement)
-				bankStatementDisrepancy[statement.Bank].SetAppearMultiple(group.AppearMultiple)
 				total.TotalProcessed++
 				total.TotalUnmatched++
 			}
 		}
 	}
 
-	r.summaryRepo.StoreSummary(total)
-
-	r.transactionRepo.StoreTransactions(transactionDiscrepancies)
-	for bank, group := range bankStatementDisrepancy {
-		r.bankStatementRepo.StoreBankStatements(group.Statements, group.AppearMultiple, bank)
+	err = r.summaryRepoStorage.StoreSummary(total)
+	if err != nil {
+		return fmt.Errorf("store summary error: %w", err)
 	}
+
+	err = r.transactionStorage.StoreTransactions(transactionDiscrepancies)
+	if err != nil {
+		return fmt.Errorf("store transactions error: %w", err)
+	}
+
+	for bank, group := range bankStatementDisrepancy {
+		err = r.bankStatementRepoStorage.StoreBankStatements(group.Statements, bank)
+		if err != nil {
+			return fmt.Errorf("store bank statements error: %w", err)
+		}
+	}
+
+	return nil
 }

@@ -19,25 +19,14 @@ type BankStatement struct {
 
 type BankStatementGroup struct {
 	BankStatements []BankStatement
-	AppearMultiple bool
 }
 
 func (b *BankStatementGroup) Add(statement BankStatement) {
-	if len(b.BankStatements) == 0 {
-		b.BankStatements = []BankStatement{}
-	} else {
-		b.SetAppearMultiple()
-	}
-
 	b.BankStatements = append(b.BankStatements, statement)
 }
 
 func (b *BankStatementGroup) Shift() {
 	b.BankStatements = b.BankStatements[1:]
-}
-
-func (b *BankStatementGroup) SetAppearMultiple() {
-	b.AppearMultiple = true
 }
 
 type BankStatementStorage struct {
@@ -105,26 +94,26 @@ func (b BankStatementStorage) GetBankStatements(filename string, startDate time.
 	return statements, nil
 }
 
-func (b BankStatementStorage) StoreBankStatements(statements []BankStatement, appearMultiple bool, bankName string) error {
+func (b BankStatementStorage) StoreBankStatements(statements []BankStatement, bankName string) error {
 	f, err := b.excelWriterFactory.New(b.destinationFileNamePath) // open existing file
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open file: %w", err)
 	}
 
 	index, err := f.GetSheetIndex(bankName)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get sheet index: %w", err)
 	}
 
 	if index == -1 {
-		_, errSheet := f.NewSheet(bankName)
-		if errSheet != nil {
-			return errSheet
+		_, err = f.NewSheet(bankName)
+		if err != nil {
+			return fmt.Errorf("failed to create sheet: %w", err)
 		}
 	}
 
 	// Write header row
-	headers := []string{"Bank", "ID", "Amount", "Time", "Appear Multiple Time"}
+	headers := []string{"Bank", "ID", "Amount", "Time"}
 	for i, h := range headers {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1) // row 1
 		f.SetCellValue(bankName, cell, h)
@@ -137,7 +126,6 @@ func (b BankStatementStorage) StoreBankStatements(statements []BankStatement, ap
 			s.ID,
 			s.Amount,
 			s.Time.Format(time.RFC3339), // store as formatted string
-			appearMultiple,
 		}
 		for col, v := range values {
 			cell, _ := excelize.CoordinatesToCellName(col+1, row+2) // data starts at row 2
@@ -147,7 +135,7 @@ func (b BankStatementStorage) StoreBankStatements(statements []BankStatement, ap
 
 	// Save file
 	if err := f.SaveAs(b.destinationFileNamePath); err != nil {
-		return err
+		return fmt.Errorf("failed to save file: %w", err)
 	}
 	return nil
 }

@@ -11,6 +11,7 @@ package recon
 
 import (
 	reflect "reflect"
+	time "time"
 
 	excelize "github.com/xuri/excelize/v2"
 	gomock "go.uber.org/mock/gomock"
@@ -422,6 +423,270 @@ func (c *MockReaderReadAllCall) Do(f func() ([][]string, error)) *MockReaderRead
 
 // DoAndReturn rewrite *gomock.Call.DoAndReturn
 func (c *MockReaderReadAllCall) DoAndReturn(f func() ([][]string, error)) *MockReaderReadAllCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// MockTransactionStorageProvider is a mock of TransactionStorageProvider interface.
+type MockTransactionStorageProvider struct {
+	ctrl     *gomock.Controller
+	recorder *MockTransactionStorageProviderMockRecorder
+	isgomock struct{}
+}
+
+// MockTransactionStorageProviderMockRecorder is the mock recorder for MockTransactionStorageProvider.
+type MockTransactionStorageProviderMockRecorder struct {
+	mock *MockTransactionStorageProvider
+}
+
+// NewMockTransactionStorageProvider creates a new mock instance.
+func NewMockTransactionStorageProvider(ctrl *gomock.Controller) *MockTransactionStorageProvider {
+	mock := &MockTransactionStorageProvider{ctrl: ctrl}
+	mock.recorder = &MockTransactionStorageProviderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTransactionStorageProvider) EXPECT() *MockTransactionStorageProviderMockRecorder {
+	return m.recorder
+}
+
+// GetTransactions mocks base method.
+func (m *MockTransactionStorageProvider) GetTransactions(filename string, startDate, endDate time.Time) ([]Transaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTransactions", filename, startDate, endDate)
+	ret0, _ := ret[0].([]Transaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTransactions indicates an expected call of GetTransactions.
+func (mr *MockTransactionStorageProviderMockRecorder) GetTransactions(filename, startDate, endDate any) *MockTransactionStorageProviderGetTransactionsCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactions", reflect.TypeOf((*MockTransactionStorageProvider)(nil).GetTransactions), filename, startDate, endDate)
+	return &MockTransactionStorageProviderGetTransactionsCall{Call: call}
+}
+
+// MockTransactionStorageProviderGetTransactionsCall wrap *gomock.Call
+type MockTransactionStorageProviderGetTransactionsCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockTransactionStorageProviderGetTransactionsCall) Return(arg0 []Transaction, arg1 error) *MockTransactionStorageProviderGetTransactionsCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockTransactionStorageProviderGetTransactionsCall) Do(f func(string, time.Time, time.Time) ([]Transaction, error)) *MockTransactionStorageProviderGetTransactionsCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockTransactionStorageProviderGetTransactionsCall) DoAndReturn(f func(string, time.Time, time.Time) ([]Transaction, error)) *MockTransactionStorageProviderGetTransactionsCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// StoreTransactions mocks base method.
+func (m *MockTransactionStorageProvider) StoreTransactions(transactions []Transaction) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StoreTransactions", transactions)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// StoreTransactions indicates an expected call of StoreTransactions.
+func (mr *MockTransactionStorageProviderMockRecorder) StoreTransactions(transactions any) *MockTransactionStorageProviderStoreTransactionsCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreTransactions", reflect.TypeOf((*MockTransactionStorageProvider)(nil).StoreTransactions), transactions)
+	return &MockTransactionStorageProviderStoreTransactionsCall{Call: call}
+}
+
+// MockTransactionStorageProviderStoreTransactionsCall wrap *gomock.Call
+type MockTransactionStorageProviderStoreTransactionsCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockTransactionStorageProviderStoreTransactionsCall) Return(arg0 error) *MockTransactionStorageProviderStoreTransactionsCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockTransactionStorageProviderStoreTransactionsCall) Do(f func([]Transaction) error) *MockTransactionStorageProviderStoreTransactionsCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockTransactionStorageProviderStoreTransactionsCall) DoAndReturn(f func([]Transaction) error) *MockTransactionStorageProviderStoreTransactionsCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// MockBankStatementStorageProvider is a mock of BankStatementStorageProvider interface.
+type MockBankStatementStorageProvider struct {
+	ctrl     *gomock.Controller
+	recorder *MockBankStatementStorageProviderMockRecorder
+	isgomock struct{}
+}
+
+// MockBankStatementStorageProviderMockRecorder is the mock recorder for MockBankStatementStorageProvider.
+type MockBankStatementStorageProviderMockRecorder struct {
+	mock *MockBankStatementStorageProvider
+}
+
+// NewMockBankStatementStorageProvider creates a new mock instance.
+func NewMockBankStatementStorageProvider(ctrl *gomock.Controller) *MockBankStatementStorageProvider {
+	mock := &MockBankStatementStorageProvider{ctrl: ctrl}
+	mock.recorder = &MockBankStatementStorageProviderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockBankStatementStorageProvider) EXPECT() *MockBankStatementStorageProviderMockRecorder {
+	return m.recorder
+}
+
+// GetBankStatements mocks base method.
+func (m *MockBankStatementStorageProvider) GetBankStatements(filename string, startDate, endDate time.Time) ([]BankStatement, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBankStatements", filename, startDate, endDate)
+	ret0, _ := ret[0].([]BankStatement)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBankStatements indicates an expected call of GetBankStatements.
+func (mr *MockBankStatementStorageProviderMockRecorder) GetBankStatements(filename, startDate, endDate any) *MockBankStatementStorageProviderGetBankStatementsCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBankStatements", reflect.TypeOf((*MockBankStatementStorageProvider)(nil).GetBankStatements), filename, startDate, endDate)
+	return &MockBankStatementStorageProviderGetBankStatementsCall{Call: call}
+}
+
+// MockBankStatementStorageProviderGetBankStatementsCall wrap *gomock.Call
+type MockBankStatementStorageProviderGetBankStatementsCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockBankStatementStorageProviderGetBankStatementsCall) Return(arg0 []BankStatement, arg1 error) *MockBankStatementStorageProviderGetBankStatementsCall {
+	c.Call = c.Call.Return(arg0, arg1)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockBankStatementStorageProviderGetBankStatementsCall) Do(f func(string, time.Time, time.Time) ([]BankStatement, error)) *MockBankStatementStorageProviderGetBankStatementsCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockBankStatementStorageProviderGetBankStatementsCall) DoAndReturn(f func(string, time.Time, time.Time) ([]BankStatement, error)) *MockBankStatementStorageProviderGetBankStatementsCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// StoreBankStatements mocks base method.
+func (m *MockBankStatementStorageProvider) StoreBankStatements(statements []BankStatement, bankName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StoreBankStatements", statements, bankName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// StoreBankStatements indicates an expected call of StoreBankStatements.
+func (mr *MockBankStatementStorageProviderMockRecorder) StoreBankStatements(statements, bankName any) *MockBankStatementStorageProviderStoreBankStatementsCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreBankStatements", reflect.TypeOf((*MockBankStatementStorageProvider)(nil).StoreBankStatements), statements, bankName)
+	return &MockBankStatementStorageProviderStoreBankStatementsCall{Call: call}
+}
+
+// MockBankStatementStorageProviderStoreBankStatementsCall wrap *gomock.Call
+type MockBankStatementStorageProviderStoreBankStatementsCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockBankStatementStorageProviderStoreBankStatementsCall) Return(arg0 error) *MockBankStatementStorageProviderStoreBankStatementsCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockBankStatementStorageProviderStoreBankStatementsCall) Do(f func([]BankStatement, string) error) *MockBankStatementStorageProviderStoreBankStatementsCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockBankStatementStorageProviderStoreBankStatementsCall) DoAndReturn(f func([]BankStatement, string) error) *MockBankStatementStorageProviderStoreBankStatementsCall {
+	c.Call = c.Call.DoAndReturn(f)
+	return c
+}
+
+// MockSummaryStorageProvider is a mock of SummaryStorageProvider interface.
+type MockSummaryStorageProvider struct {
+	ctrl     *gomock.Controller
+	recorder *MockSummaryStorageProviderMockRecorder
+	isgomock struct{}
+}
+
+// MockSummaryStorageProviderMockRecorder is the mock recorder for MockSummaryStorageProvider.
+type MockSummaryStorageProviderMockRecorder struct {
+	mock *MockSummaryStorageProvider
+}
+
+// NewMockSummaryStorageProvider creates a new mock instance.
+func NewMockSummaryStorageProvider(ctrl *gomock.Controller) *MockSummaryStorageProvider {
+	mock := &MockSummaryStorageProvider{ctrl: ctrl}
+	mock.recorder = &MockSummaryStorageProviderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSummaryStorageProvider) EXPECT() *MockSummaryStorageProviderMockRecorder {
+	return m.recorder
+}
+
+// StoreSummary mocks base method.
+func (m *MockSummaryStorageProvider) StoreSummary(total Summary) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StoreSummary", total)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// StoreSummary indicates an expected call of StoreSummary.
+func (mr *MockSummaryStorageProviderMockRecorder) StoreSummary(total any) *MockSummaryStorageProviderStoreSummaryCall {
+	mr.mock.ctrl.T.Helper()
+	call := mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreSummary", reflect.TypeOf((*MockSummaryStorageProvider)(nil).StoreSummary), total)
+	return &MockSummaryStorageProviderStoreSummaryCall{Call: call}
+}
+
+// MockSummaryStorageProviderStoreSummaryCall wrap *gomock.Call
+type MockSummaryStorageProviderStoreSummaryCall struct {
+	*gomock.Call
+}
+
+// Return rewrite *gomock.Call.Return
+func (c *MockSummaryStorageProviderStoreSummaryCall) Return(arg0 error) *MockSummaryStorageProviderStoreSummaryCall {
+	c.Call = c.Call.Return(arg0)
+	return c
+}
+
+// Do rewrite *gomock.Call.Do
+func (c *MockSummaryStorageProviderStoreSummaryCall) Do(f func(Summary) error) *MockSummaryStorageProviderStoreSummaryCall {
+	c.Call = c.Call.Do(f)
+	return c
+}
+
+// DoAndReturn rewrite *gomock.Call.DoAndReturn
+func (c *MockSummaryStorageProviderStoreSummaryCall) DoAndReturn(f func(Summary) error) *MockSummaryStorageProviderStoreSummaryCall {
 	c.Call = c.Call.DoAndReturn(f)
 	return c
 }

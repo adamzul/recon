@@ -1,6 +1,10 @@
 package recon
 
-import "github.com/xuri/excelize/v2"
+import (
+	"fmt"
+
+	"github.com/xuri/excelize/v2"
+)
 
 type Summary struct {
 	TotalAmountTransactions   float64
@@ -27,16 +31,19 @@ func NewSummaryStorage(destinationFileNamePath string, destinationSheetName stri
 func (s SummaryStorage) StoreSummary(total Summary) error {
 	f, err := s.excelWriterFactory.New(s.destinationFileNamePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open file: %w", err)
 	}
 
 	index, err := f.GetSheetIndex(s.destinationSheetName)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get sheet index: %w", err)
 	}
 
 	if index == -1 {
-		f.NewSheet(s.destinationSheetName)
+		_, err = f.NewSheet(s.destinationSheetName)
+		if err != nil {
+			return fmt.Errorf("failed to create sheet: %w", err)
+		}
 	}
 
 	// key-value pairs

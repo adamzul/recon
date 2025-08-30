@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"recon/recon"
+	"strings"
 	"time"
 )
 
@@ -18,15 +19,15 @@ func main() {
 	flag.StringVar(&endDateStr, "end-date", time.Now().Format("2006-01-02"), "bank statements CSV file path")
 	flag.Parse()
 
+	bankStatementPathArray := strings.Split(bankStatementPaths, ",")
+
 	startDate, err := time.Parse("2006-01-02", startDateStr)
 	if err != nil {
-		log.Println(err)
-		return
+		log.Panic(err)
 	}
 	endDate, err := time.Parse("2006-01-02", endDateStr)
 	if err != nil {
-		log.Println(err)
-		return
+		log.Panic(err)
 	}
 
 	excelFactory := recon.ExcelFactory{}
@@ -38,5 +39,8 @@ func main() {
 		recon.NewSummaryStorage(reconPath, "Summary", excelFactory),
 	)
 
-	reconExecutor.Execute(transactionPath, bankStatementPaths, startDate, endDate)
+	err = reconExecutor.Execute(transactionPath, bankStatementPathArray, startDate, endDate)
+	if err != nil {
+		log.Panic(err)
+	}
 }

@@ -16,7 +16,7 @@ const (
 )
 
 type Transaction struct {
-	Id     string
+	ID     string
 	Amount float64
 	Type   TransactionType
 	Time   time.Time
@@ -51,9 +51,9 @@ func (t TransactionStorage) StoreTransactions(transactions []Transaction) error 
 	}
 
 	if index == -1 {
-		_, errsSheet := f.NewSheet(t.destinationSheetName)
-		if errsSheet != nil {
-			return errsSheet
+		_, err = f.NewSheet(t.destinationSheetName)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -67,7 +67,7 @@ func (t TransactionStorage) StoreTransactions(transactions []Transaction) error 
 	// rows
 	for row, tx := range transactions {
 		values := []any{
-			tx.Id,
+			tx.ID,
 			tx.Amount,
 			string(tx.Type),
 			tx.Time.Format(time.RFC3339),
@@ -84,13 +84,13 @@ func (t TransactionStorage) StoreTransactions(transactions []Transaction) error 
 func (t TransactionStorage) GetTransactions(filename string, startDate time.Time, endDate time.Time) ([]Transaction, error) {
 	reader, err := t.readerFactory.NewReader(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer reader.Close()
 
 	records, err := reader.ReadAll()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	if len(records) < 2 {
@@ -115,7 +115,7 @@ func (t TransactionStorage) GetTransactions(filename string, startDate time.Time
 		}
 
 		tx := Transaction{
-			Id:     row[0],
+			ID:     row[0],
 			Amount: amount,
 			Type:   TransactionType(row[2]),
 			Time:   t,

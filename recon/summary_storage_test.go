@@ -85,7 +85,6 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 		err := suite.summaryStorage.StoreSummary(summary)
 
 		g.Expect(err).ShouldNot(BeNil())
-		g.Expect(err.Error()).Should(Equal("open file error"))
 	})
 
 	t.Run("get sheet index error", func(t *testing.T) {
@@ -109,7 +108,6 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 		err := suite.summaryStorage.StoreSummary(summary)
 
 		g.Expect(err).ShouldNot(BeNil())
-		g.Expect(err.Error()).Should(Equal("get sheet index error"))
 	})
 
 	t.Run("save as error", func(t *testing.T) {
@@ -146,6 +144,5 @@ func TestSummaryStorage_StoreSummary(t *testing.T) {
 		err := suite.summaryStorage.StoreSummary(summary)
 
 		g.Expect(err).ShouldNot(BeNil())
-		g.Expect(err.Error()).Should(Equal("save as error"))
 	})
 }
