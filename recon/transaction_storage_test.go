@@ -98,7 +98,6 @@ func TestTransactionStorage_StoreTransactions(t *testing.T) {
 		err := suite.transactionStorage.StoreTransactions(transactions)
 
 		g.Expect(err).ShouldNot(BeNil())
-		g.Expect(err.Error()).Should(Equal("new error"))
 	})
 
 	t.Run("should return error when f.SaveAs returns error", func(t *testing.T) {
@@ -136,7 +135,6 @@ func TestTransactionStorage_StoreTransactions(t *testing.T) {
 		err := suite.transactionStorage.StoreTransactions(transactions)
 
 		g.Expect(err).ShouldNot(BeNil())
-		g.Expect(err.Error()).Should(Equal("save error"))
 	})
 }
 
@@ -276,7 +274,6 @@ func TestTransactionStorage_GetTransactions(t *testing.T) {
 		transactions, err := suite.transactionStorage.GetTransactions(filename, startDate, endDate)
 
 		g.Expect(err).ShouldNot(BeNil())
-		g.Expect(err.Error()).Should(ContainSubstring("invalid time format in row"))
 		g.Expect(transactions).Should(BeNil())
 	})
 

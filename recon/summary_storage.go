@@ -63,5 +63,9 @@ func (s SummaryStorage) StoreSummary(total Summary) error {
 		}
 	}
 
-	return f.SaveAs(s.destinationFileNamePath)
+	err = f.SaveAs(s.destinationFileNamePath)
+	if err != nil {
+		return fmt.Errorf("save as error: %w", err)
+	}
+	return nil
 }

@@ -47,13 +47,13 @@ func NewBankStatementStorage(destinationFileNamePath string, excelWriterFactory 
 func (b BankStatementStorage) GetBankStatements(filename string, startDate time.Time, endDate time.Time) ([]BankStatement, error) {
 	reader, err := b.readerFactory.NewReader(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer reader.Close()
 
 	records, err := reader.ReadAll()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	if len(records) < 2 {

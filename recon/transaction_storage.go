@@ -42,18 +42,18 @@ func NewTransactionStorage(destinationFileNamePath string, destinationSheetName 
 func (t TransactionStorage) StoreTransactions(transactions []Transaction) error {
 	f, err := t.excelWriterFactory.New(t.destinationFileNamePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create excel file: %w", err)
 	}
 
 	index, err := f.GetSheetIndex(t.destinationSheetName)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get sheet index: %w", err)
 	}
 
 	if index == -1 {
 		_, err = f.NewSheet(t.destinationSheetName)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create sheet: %w", err)
 		}
 	}
 
@@ -78,7 +78,11 @@ func (t TransactionStorage) StoreTransactions(transactions []Transaction) error 
 		}
 	}
 
-	return f.SaveAs(t.destinationFileNamePath)
+	err = f.SaveAs(t.destinationFileNamePath)
+	if err != nil {
+		return fmt.Errorf("save as error: %w", err)
+	}
+	return nil
 }
 
 func (t TransactionStorage) GetTransactions(filename string, startDate time.Time, endDate time.Time) ([]Transaction, error) {
